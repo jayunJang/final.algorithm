@@ -1,0 +1,136 @@
+{
+    "categories": [
+        {
+            "name": "Music",
+            "code": "music",
+            "color": "#B0C8FF",
+            "icon": "/assets/icons/music.svg",
+            "description": "Tracks, scenes, and rhythms that the algorithm thinks you will repeat.",
+            "subcategories": [
+                { "name": "Reggaeton", "code": "reggaeton" },
+                { "name": "Pop", "code": "pop" },
+                { "name": "Techno", "code": "techno" },
+                { "name": "Idol Music", "code": "idol" },
+                { "name": "Ballad", "code": "ballad" },
+                { "name": "Indie Band", "code": "indie" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/music/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Algorithm serves trending hooks over and over."
+                },
+                {
+                    "video": "/assets/reels/music/PLACEHOLDER2.mp4",
+                    "caption": "Dummy caption: Suggested remix after remix keeps looping."
+                }
+            ]
+        },
+        {
+            "name": "Fashion",
+            "code": "fashion",
+            "color": "#FFD6E8",
+            "icon": "/assets/icons/fashion.svg",
+            "description": "Outfits, drops, and aesthetics curated to your wardrobe dreams.",
+            "subcategories": [
+                { "name": "Streetwear", "code": "streetwear" },
+                { "name": "Avant-Garde", "code": "avantgarde" },
+                { "name": "Minimalist", "code": "minimalist" },
+                { "name": "Luxury", "code": "luxury" },
+                { "name": "Thrift Finds", "code": "thrift" },
+                { "name": "Beauty", "code": "beauty" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/fashion/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Outfit transitions in sync with the beat."
+                }
+            ]
+        },
+        {
+            "name": "Politics",
+            "code": "politics",
+            "color": "#FFB88C",
+            "icon": "/assets/icons/politics.svg",
+            "description": "Hot takes and breaking headlines in a never ending loop.",
+            "subcategories": [
+                { "name": "International", "code": "international" },
+                { "name": "Local", "code": "local" },
+                { "name": "Policy", "code": "policy" },
+                { "name": "Opinion", "code": "opinion" },
+                { "name": "Elections", "code": "elections" },
+                { "name": "Activism", "code": "activism" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/politics/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Daily briefing distilled into a quick clip."
+                }
+            ]
+        },
+        {
+            "name": "Economics",
+            "code": "economics",
+            "color": "#A8FFD3",
+            "icon": "/assets/icons/economics.svg",
+            "description": "Market updates and financial hacks the algorithm believes you need.",
+            "subcategories": [
+                { "name": "Stocks", "code": "stocks" },
+                { "name": "Crypto", "code": "crypto" },
+                { "name": "Personal Finance", "code": "personalfinance" },
+                { "name": "Macro Trends", "code": "macro" },
+                { "name": "Startups", "code": "startups" },
+                { "name": "Real Estate", "code": "realestate" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/economics/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Condensed market recap, over and over."
+                }
+            ]
+        },
+        {
+            "name": "Lifestyle",
+            "code": "lifestyle",
+            "color": "#FFE59E",
+            "icon": "/assets/icons/lifestyle.svg",
+            "description": "Routines, vlogs, and curated lives aligning with your tastes.",
+            "subcategories": [
+                { "name": "Wellness", "code": "wellness" },
+                { "name": "Travel", "code": "travel" },
+                { "name": "Food", "code": "food" },
+                { "name": "Home", "code": "home" },
+                { "name": "Productivity", "code": "productivity" },
+                { "name": "Minimal Living", "code": "minimalism" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/lifestyle/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Morning routine shots stitched together."
+                }
+            ]
+        },
+        {
+            "name": "Technology",
+            "code": "technology",
+            "color": "#9DD4FF",
+            "icon": "/assets/icons/technology.svg",
+            "description": "Launches, gadgets, and futurism catered to your curiosity.",
+            "subcategories": [
+                { "name": "AI", "code": "ai" },
+                { "name": "Gadgets", "code": "gadgets" },
+                { "name": "Gaming", "code": "gaming" },
+                { "name": "Coding", "code": "coding" },
+                { "name": "Space", "code": "space" },
+                { "name": "Startups", "code": "techstartups" }
+            ],
+            "reels": [
+                {
+                    "video": "/assets/reels/technology/PLACEHOLDER1.mp4",
+                    "caption": "Dummy caption: Fast-cut gadget demos fill the screen."
+                }
+            ]
+        }
+    ]
+}
+
+

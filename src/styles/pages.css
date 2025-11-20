@@ -1,0 +1,65 @@
+.page {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 320ms ease, transform 320ms ease;
+}
+
+.page.is-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#page-feed {
+    position: relative;
+}
+
+#page-feed .reel-grid {
+    position: relative;
+    min-height: 480px;
+}
+
+#page-feed .reel-card {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+}
+
+#page-feed .reel-card.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#page-bubble,
+#page-field {
+    position: relative;
+}
+
+#page-bubble .canvas-wrapper,
+#page-field .canvas-wrapper {
+    min-height: 520px;
+}
+
+#page-bubble .intro-text,
+#page-field .intro-text {
+    z-index: 2;
+}
+
+.overlay-hint {
+    z-index: 3;
+}
+
+.overlay-action {
+    z-index: 3;
+}
+
+@media (max-width: 600px) {
+    #page-feed .reel-grid {
+        min-height: 360px;
+    }
+
+    #page-bubble .canvas-wrapper,
+    #page-field .canvas-wrapper {
+        min-height: 380px;
+    }
+}
+
+

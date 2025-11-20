@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Algorithmic Bubble – Card Flow</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Pretendard",
+        "Noto Sans KR", "Noto Sans", sans-serif;
+      background: #111217;
+      color: #f5f5f5;
+    }
+    body {
+      position: relative;
+    }
+    /* --- Common Stage Styles --- */
+    .stage {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .stage.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .stage-header {
+      position: absolute;
+      top: 24px;
+      left: 32px;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      z-index: 10;
+    }
+    .stage-desc {
+      position: absolute;
+      top: 50px;
+      left: 32px;
+      font-size: 14px;
+      opacity: 0.8;
+      max-width: 400px;
+      line-height: 1.5;
+      z-index: 10;
+    }
+    /* --- Stage 1: Pile --- */
+    #pile-stage {
+      background: radial-gradient(circle at center, #1a1c29 0%, #05060b 100%);
+    }
+    .pile-area {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pile-card {
+      position: absolute;
+      width: 120px;
+      height: 200px;
+      background: #f0f0f0;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+      color: #111;
+      transition: transform 0.1s ease-out, box-shadow 0.2s;
+      will-change: transform;
+      aspect-ratio: 9 / 16;
+    }
+    .pile-card:hover {
+      z-index: 100 !important;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    }
+    .card-icon {
+      font-size: 24px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .card-tag {
+      font-size: 11px;
+      opacity: 0.6;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    /* --- Stage 2 & 3: Grid --- */
+    #grid-stage {
+      background: #e2e2e4;
+      color: #111;
+    }
+    #grid-stage .stage-header,
+    #grid-stage .stage-desc {
+      color: #111;
+    }
+    .grid-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-auto-rows: 200px;
+      gap: 12px;
+      padding: 12px;
+      overflow: hidden;
+      align-content: start;
+    }
+    .grid-cell {
+      position: relative;
+      background: transparent;
+      border-radius: 16px;
+      overflow: hidden;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      aspect-ratio: 9 / 16;
+      min-width: 0;
+      min-height: 0;
+    }
+    .grid-cell.active {
+      opacity: 1;
+      transform: scale(1);
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .grid-cell.main-card {
+      z-index: 10;
+      background: #222;
+      color: #fff;
+      transform: scale(1.05);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .grid-cell.side-card {
+      background: #fff;
+      color: #111;
+    }
+    /* Card Content in Grid */
+    .cell-content {
+      width: 100%;
+      height: 100%;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .like-btn {
+      align-self: flex-end;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: rgba(0,0,0,0.05);
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .like-btn:hover {
+      background: rgba(255, 127, 152, 0.1);
+      color: #ff7f98;
+    }
+    .like-btn.liked {
+      background: #ff7f98;
+      color: white;
+    }
+    .main-card .like-btn {
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .main-card .like-btn.liked {
+      background: #ff7f98;
+      color: white;
+    }
+    .drag-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .drag-hint.visible {
+      opacity: 1;
+    }
+    /* --- Stage 4: Bubble --- */
+    #bubble-stage {
+      background: radial-gradient(circle at top, #151b2e 0%, #000 100%);
+    }
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- STAGE 1: PILE -->
+  <section id="pile-stage" class="stage active">
+    <div class="stage-header">STEP 1</div>
+    <div class="stage-desc">
+      흩어진 카드들 속에서 당신의 취향을 발견하세요.<br>
+      마우스를 움직여 카드를 헤치고, 하나를 선택해보세요.
+    </div>
+    <div class="pile-area" id="pile-area">
+      <!-- Cards injected by JS -->
+    </div>
+  </section>
+  <!-- STAGE 2 & 3: GRID -->
+  <section id="grid-stage" class="stage">
+    <div class="stage-header">STEP 2 & 3</div>
+    <div class="stage-desc" id="grid-desc">
+      선택한 콘텐츠와 연관된 흐름이 이어집니다.<br>
+      '좋아요'를 눌러 알고리즘을 확장하세요.
+    </div>
+    <div class="grid-container" id="grid-container">
+      <!-- Grid cells injected by JS -->
+    </div>
+    <div class="drag-hint" id="drag-hint">
+      화면을 드래그하여 버블 속으로 들어가세요
+    </div>
+  </section>
+  <!-- STAGE 4: BUBBLE -->
+  <section id="bubble-stage" class="stage">
+    <div id="three-canvas"></div>
+    <div class="stage-header">STEP 4 · ALGORITHMIC BUBBLE</div>
+    <div class="stage-desc">
+      당신의 선택으로 완성된 알고리즘의 세계입니다.<br>
+      드래그하여 탐험하세요.
+    </div>
+  </section>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    // --- DATA ---
+    const TOPICS = [
+      { id: 'music', label: 'Music', icon: '🎵', sub: ['Techno', 'K-Pop', 'Jazz', 'Rock'] },
+      { id: 'art', label: 'Art', icon: '🎨', sub: ['Digital', 'Classic', 'NFT', 'Sketch'] },
+      { id: 'travel', label: 'Travel', icon: '✈️', sub: ['Asia', 'Europe', 'Beach', 'City'] },
+      { id: 'food', label: 'Food', icon: '🍔', sub: ['Korean', 'Italian', 'Dessert', 'Vegan'] },
+      { id: 'tech', label: 'Tech', icon: '💻', sub: ['AI', 'Coding', 'Gadgets', 'Future'] },
+      { id: 'fashion', label: 'Fashion', icon: '👗', sub: ['Street', 'Luxury', 'Vintage', 'Casual'] },
+      { id: 'pet', label: 'Pet', icon: '🐶', sub: ['Dog', 'Cat', 'Bird', 'Fish'] },
+      { id: 'game', label: 'Game', icon: '🎮', sub: ['FPS', 'RPG', 'Indie', 'Retro'] },
+    ];
+    // --- STATE ---
+    const state = {
+      selectedTopic: null,
+      likes: 0,
+      isGridFull: false,
+      bubbleInited: false
+    };
+    // --- ELEMENTS ---
+    const pileArea = document.getElementById('pile-area');
+    const gridContainer = document.getElementById('grid-container');
+    const dragHint = document.getElementById('drag-hint');
+    const stages = {
+      pile: document.getElementById('pile-stage'),
+      grid: document.getElementById('grid-stage'),
+      bubble: document.getElementById('bubble-stage')
+    };
+    // --- STAGE 1: PILE LOGIC ---
+    function initPile() {
+      // Generate random cards
+      for (let i = 0; i < 15; i++) {
+        const topic = TOPICS[i % TOPICS.length];
+        const card = document.createElement('div');
+        card.className = 'pile-card';
+        card.innerHTML = `
+          <div class="card-icon">${topic.icon}</div>
+          <div class="card-title">${topic.label}</div>
+          <div class="card-tag">#${topic.sub[0]}</div>
+        `;
+        
+        // Random position near center
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 100;
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist;
+        const rot = (Math.random() - 0.5) * 60;
+        card.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+        card.dataset.x = x;
+        card.dataset.y = y;
+        card.dataset.rot = rot;
+        // Click Event
+        card.addEventListener('click', () => selectCard(topic));
+        pileArea.appendChild(card);
+      }
+      // Physics Effect - 카드가 흩어진 채로 유지되도록
+      let hasInteracted = false;
+      document.addEventListener('mousemove', (e) => {
+        if (!stages.pile.classList.contains('active')) return;
+        const mx = e.clientX;
+        const my = e.clientY;
+        const cards = document.querySelectorAll('.pile-card');
+        cards.forEach(card => {
+          const rect = card.getBoundingClientRect();
+          const cardCx = rect.left + rect.width / 2;
+          const cardCy = rect.top + rect.height / 2;
+          const dx = mx - cardCx;
+          const dy = my - cardCy;
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          const maxDist = 300;
+          if (dist < maxDist) {
+            hasInteracted = true;
+            const force = (maxDist - dist) / maxDist;
+            const moveX = -(dx / dist) * force * 150; // Repulsion strength
+            const moveY = -(dy / dist) * force * 150;
+            
+            const baseX = parseFloat(card.dataset.x);
+            const baseY = parseFloat(card.dataset.y);
+            const rot = parseFloat(card.dataset.rot);
+            const newX = baseX + moveX;
+            const newY = baseY + moveY;
+            card.style.transform = `translate(${newX}px, ${newY}px) rotate(${rot}deg)`;
+            // Update base position to maintain spread
+            card.dataset.x = newX;
+            card.dataset.y = newY;
+          }
+        });
+      });
+    }
+    // --- STAGE 2: TRANSITION TO GRID ---
+    function selectCard(topic) {
+      state.selectedTopic = topic;
+      
+      // Switch Stage
+      stages.pile.classList.remove('active');
+      stages.grid.classList.add('active');
+      initGrid(topic);
+    }
+    // --- STAGE 3: GRID EXPANSION ---
+    function initGrid(topic) {
+      gridContainer.innerHTML = '';
+      
+      // Calculate how many cards can fit on screen - 화면에 꽉 차도록
+      const cardWidth = 120;
+      const cardHeight = 200;
+      const gap = 12;
+      const padding = 12;
+      const availableWidth = window.innerWidth - padding * 2;
+      const availableHeight = window.innerHeight - padding * 2;
+      const cols = Math.max(3, Math.floor(availableWidth / (cardWidth + gap)));
+      const rows = Math.max(2, Math.floor(availableHeight / (cardHeight + gap)));
+      const totalCells = cols * rows;
+      
+      // 그리드 컨테이너 스타일 조정
+      gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+      gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+      
+      const cells = [];
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.index = i;
+        gridContainer.appendChild(cell);
+        cells.push(cell);
+      }
+      
+      // Setup Main Card (Center-ish)
+      const centerIdx = Math.floor(totalCells / 2);
+      setupCell(cells[centerIdx], topic, true);
+      cells[centerIdx].classList.add('main-card', 'active');
+      
+      // Setup Side Cards (Immediate Context)
+      setTimeout(() => {
+        if (centerIdx - 1 >= 0) {
+          setupCell(cells[centerIdx - 1], { ...topic, label: topic.sub[0] }, false);
+          cells[centerIdx - 1].classList.add('side-card', 'active');
+        }
+      }, 300);
+      setTimeout(() => {
+        if (centerIdx + 1 < totalCells) {
+          setupCell(cells[centerIdx + 1], { ...topic, label: topic.sub[1] }, false);
+          cells[centerIdx + 1].classList.add('side-card', 'active');
+        }
+      }, 600);
+    }
+    function setupCell(element, data, isMain) {
+      element.innerHTML = `
+        <div class="cell-content">
+          <div class="card-title" style="font-size: ${isMain ? '24px' : '16px'}">${data.label}</div>
+          <button class="like-btn">
+            <span>♥</span> Like
+          </button>
+        </div>
+      `;
+      const btn = element.querySelector('.like-btn');
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!btn.classList.contains('liked')) {
+          btn.classList.add('liked');
+          expandGrid();
+        }
+      });
+    }
+    function expandGrid() {
+      state.likes++;
+      
+      // Reveal more cells based on likes
+      const cells = Array.from(document.querySelectorAll('.grid-cell:not(.active)'));
+      
+      if (cells.length === 0) return;
+      // Reveal 3 random cells per like
+      const toReveal = cells.sort(() => 0.5 - Math.random()).slice(0, 3);
+      
+      toReveal.forEach((cell, i) => {
+        setTimeout(() => {
+          const subTopic = state.selectedTopic.sub[Math.floor(Math.random() * state.selectedTopic.sub.length)];
+          setupCell(cell, { label: subTopic }, false);
+          cell.classList.add('side-card', 'active');
+        }, i * 100);
+      });
+      // Check if full
+      const remaining = document.querySelectorAll('.grid-cell:not(.active)').length;
+      if (remaining <= 3 && !state.isGridFull) {
+        state.isGridFull = true;
+        dragHint.classList.add('visible');
+        enableDragToBubble();
+      }
+    }
+    function enableDragToBubble() {
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let dragProgress = 0;
+      
+      const onDown = (e) => {
+        isDragging = true;
+        startX = e.clientX || e.touches[0].clientX;
+        startY = e.clientY || e.touches[0].clientY;
+        gridContainer.style.transition = 'none';
+      };
+      const onUp = () => {
+        isDragging = false;
+        gridContainer.style.transition = '';
+        if (dragProgress > 0.7) {
+          goToBubbleStage();
+        } else {
+          // Reset
+          gridContainer.style.transform = '';
+          gridContainer.style.opacity = '';
+        }
+        dragProgress = 0;
+      };
+      const onMove = (e) => {
+        if (!isDragging) return;
+        const x = e.clientX || e.touches[0].clientX;
+        const y = e.clientY || e.touches[0].clientY;
+        const dx = x - startX;
+        const dy = y - startY;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const maxDist = 200;
+        dragProgress = Math.min(dist / maxDist, 1);
+        
+        // 그리드를 구 형태로 변형
+        const scale = 1 - dragProgress * 0.3;
+        const rotateX = (dy / maxDist) * Math.PI * 0.5;
+        const rotateY = (dx / maxDist) * Math.PI * 0.5;
+        
+        gridContainer.style.transform = `
+          scale(${scale})
+          rotateX(${rotateX}rad)
+          rotateY(${rotateY}rad)
+          perspective(1000px)
+        `;
+        gridContainer.style.opacity = 1 - dragProgress * 0.5;
+        
+        if (dragProgress > 0.7) {
+          goToBubbleStage();
+          isDragging = false;
+        }
+      };
+      document.addEventListener('mousedown', onDown);
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      
+      document.addEventListener('touchstart', onDown);
+      document.addEventListener('touchmove', onMove);
+      document.addEventListener('touchend', onUp);
+    }
+    function goToBubbleStage() {
+      // 그리드의 카드들을 수집하여 구로 변환
+      const gridCards = Array.from(document.querySelectorAll('.grid-cell.active'));
+      const cardData = gridCards.map((cell, index) => {
+        const rect = cell.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const title = cell.querySelector('.card-title')?.textContent || '';
+        const isLiked = cell.querySelector('.like-btn')?.classList.contains('liked') || false;
+        return {
+          x: (centerX - window.innerWidth / 2) / window.innerWidth * 20, // 3D 공간으로 스케일
+          y: -(centerY - window.innerHeight / 2) / window.innerHeight * 20, // Y축 반전
+          z: 0,
+          title,
+          isLiked,
+          index
+        };
+      });
+      
+      // 그리드 페이드아웃
+      stages.grid.style.transition = 'opacity 0.8s ease';
+      stages.grid.style.opacity = '0';
+      
+      setTimeout(() => {
+        stages.grid.classList.remove('active');
+        stages.bubble.classList.add('active');
+        
+        if (!state.bubbleInited) {
+          initThreeJS(cardData);
+          state.bubbleInited = true;
+        }
+      }, 400);
+    }
+    // --- STAGE 4: THREE.JS BUBBLE ---
+    let bubbleState = {
+      cameraDistance: 0.1,
+      isOutside: false,
+      clickCount: 0,
+      lastClickTime: 0,
+      isExploding: false
+    };
+    
+    function initThreeJS(cardData = []) {
+      const container = document.getElementById('three-canvas');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+      
+      // Cards on Sphere - 릴스카드 형태로 통일
+      const group = new THREE.Group();
+      scene.add(group);
+      const count = cardData.length > 0 ? cardData.length : 40;
+      const radius = 8;
+      const cardAspect = 9 / 16; // 릴스카드 비율
+      const cardHeight = 2.2;
+      const cardWidth = cardHeight * cardAspect;
+      
+      const cards = [];
+      for (let i = 0; i < count; i++) {
+        const phi = Math.acos(-1 + (2 * i) / count);
+        const theta = Math.sqrt(count * Math.PI) * phi;
+        const geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
+        const material = new THREE.MeshBasicMaterial({ 
+          color: 0xffffff,
+          side: THREE.DoubleSide
+        });
+        const card = new THREE.Mesh(geometry, material);
+        
+        // 그리드에서 전환된 경우 초기 위치를 그리드 위치로 설정
+        if (cardData && cardData[i]) {
+          card.position.set(
+            cardData[i].x,
+            cardData[i].y,
+            cardData[i].z || 0
+          );
+          card.userData.targetPosition = new THREE.Vector3();
+          card.userData.targetPosition.setFromSphericalCoords(radius, phi, theta);
+          card.userData.isTransitioning = true;
+          card.userData.transitionProgress = 0;
+        } else {
+          const pos = new THREE.Vector3();
+          pos.setFromSphericalCoords(radius, phi, theta);
+          card.position.copy(pos);
+          card.userData.targetPosition = pos.clone();
+          card.userData.isTransitioning = false;
+        }
+        
+        card.lookAt(0, 0, 0);
+        
+        // Store original position and rotation
+        card.userData.originalPosition = card.userData.targetPosition.clone();
+        card.userData.originalRotation = card.rotation.clone();
+        card.userData.velocity = new THREE.Vector3(0, 0, 0);
+        
+        // Add some content texture (simplified color for now)
+        card.material.color.setHSL(Math.random(), 0.7, 0.5);
+        group.add(card);
+        cards.push(card);
+      }
+      
+      camera.position.z = 0.1; // Inside the sphere initially
+      
+      // Interaction
+      let isDragging = false;
+      let prevX = 0;
+      let prevY = 0;
+      
+      container.addEventListener('mousedown', e => {
+        isDragging = true;
+        prevX = e.clientX;
+        prevY = e.clientY;
+      });
+      
+      window.addEventListener('mouseup', () => isDragging = false);
+      
+      container.addEventListener('mousemove', e => {
+        if (!isDragging || bubbleState.isExploding) return;
+        const dx = e.clientX - prevX;
+        const dy = e.clientY - prevY;
+        group.rotation.y += dx * 0.005;
+        group.rotation.x += dy * 0.005;
+        prevX = e.clientX;
+        prevY = e.clientY;
+      });
+      
+      // 스크롤아웃으로 구 바깥으로 나가기
+      container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        const delta = e.deltaY * 0.05;
+        bubbleState.cameraDistance += delta;
+        bubbleState.cameraDistance = Math.max(0.1, Math.min(30, bubbleState.cameraDistance));
+        
+        if (bubbleState.cameraDistance > 12) {
+          if (!bubbleState.isOutside) {
+            bubbleState.isOutside = true;
+            bubbleState.clickCount = 0; // 바깥으로 나가면 클릭 카운터 리셋
+          }
+        } else {
+          bubbleState.isOutside = false;
+          bubbleState.clickCount = 0; // 안으로 들어오면 클릭 카운터 리셋
+        }
+      });
+      
+      // 바깥에서 구를 5번 이상 클릭하면 터지기
+      container.addEventListener('click', (e) => {
+        if (!bubbleState.isOutside || bubbleState.isExploding) return;
+        
+        const now = Date.now();
+        if (now - bubbleState.lastClickTime < 1000) {
+          bubbleState.clickCount++;
+        } else {
+          bubbleState.clickCount = 1;
+        }
+        bubbleState.lastClickTime = now;
+        
+        if (bubbleState.clickCount >= 5) {
+          explodeBubble(cards);
+        }
+      });
+      
+      function explodeBubble(cards) {
+        bubbleState.isExploding = true;
+        cards.forEach((card, i) => {
+          const direction = new THREE.Vector3()
+            .subVectors(card.position, new THREE.Vector3(0, 0, 0))
+            .normalize();
+          
+          const speed = 0.15 + Math.random() * 0.15;
+          card.userData.velocity = direction.clone().multiplyScalar(speed);
+          
+          // 랜덤 회전 속도 추가
+          if (!card.userData.rotationSpeed) {
+            card.userData.rotationSpeed = new THREE.Vector3(
+              (Math.random() - 0.5) * 0.15,
+              (Math.random() - 0.5) * 0.15,
+              (Math.random() - 0.5) * 0.15
+            );
+          }
+        });
+      }
+      
+      function animate() {
+        requestAnimationFrame(animate);
+        
+        // 카메라 위치 업데이트
+        const targetZ = bubbleState.cameraDistance;
+        camera.position.z += (targetZ - camera.position.z) * 0.1;
+        
+        // 그리드에서 구로 전환 애니메이션
+        cards.forEach(card => {
+          if (card.userData.isTransitioning && !bubbleState.isExploding) {
+            card.userData.transitionProgress += 0.02;
+            if (card.userData.transitionProgress > 1) {
+              card.userData.transitionProgress = 1;
+              card.userData.isTransitioning = false;
+            }
+            
+            const t = card.userData.transitionProgress;
+            const easeT = t * t * (3 - 2 * t); // Smoothstep
+            
+            card.position.lerp(card.userData.targetPosition, easeT);
+            
+            // Look at center during transition
+            const lookAt = new THREE.Vector3(0, 0, 0);
+            card.lookAt(lookAt);
+          }
+        });
+        
+        // 폭발 애니메이션
+        if (bubbleState.isExploding) {
+          cards.forEach(card => {
+            if (card.userData.velocity) {
+              card.position.add(card.userData.velocity);
+            }
+            
+            if (card.userData.rotationSpeed) {
+              card.rotation.x += card.userData.rotationSpeed.x;
+              card.rotation.y += card.userData.rotationSpeed.y;
+              card.rotation.z += card.userData.rotationSpeed.z;
+            }
+            
+            // Fade out
+            if (!card.material.transparent) {
+              card.material.transparent = true;
+            }
+            card.material.opacity = Math.max(0, (card.material.opacity || 1) - 0.015);
+            
+            // Slow down
+            if (card.userData.velocity) {
+              card.userData.velocity.multiplyScalar(0.98);
+            }
+          });
+        }
+        
+        renderer.render(scene, camera);
+      }
+      animate();
+      
+      // Handle Resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+    // Start
+    initPile();
+  </script>
+</body>
+</html>
+</html>
