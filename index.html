@@ -626,17 +626,20 @@
         const videoUrl = randomVideo;
         
         card.innerHTML = `
-          <video autoplay loop muted playsinline>
+          <video autoplay loop muted playsinline preload="none">
             <source src="${videoUrl}" type="video/mp4">
           </video>
           <div class="card-content">
           </div>
         `;
         
-        // 비디오 재생
+        // 비디오 재생 (지연 로딩)
         const video = card.querySelector('video');
         if (video) {
-          video.play().catch(e => console.log('Video autoplay prevented:', e));
+          video.addEventListener('loadeddata', () => {
+            video.play().catch(() => {});
+          }, { once: true });
+          video.load();
         }
         
         // Random position near center
@@ -724,45 +727,42 @@
         
         cards.forEach((card, i) => {
           const physics = cardPhysics[i];
-          const rect = card.getBoundingClientRect();
-          const cardCx = rect.left + rect.width / 2;
-          const cardCy = rect.top + rect.height / 2;
           
           // 처음 호버 시 펼쳐지는 애니메이션
           if (hasSpread && timeSinceSpread < spreadDuration) {
             const progress = Math.min(timeSinceSpread / spreadDuration, 1);
-            const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
             const targetX = physics.baseX + (physics.spreadX - physics.baseX) * easeProgress;
             const targetY = physics.baseY + (physics.spreadY - physics.baseY) * easeProgress;
             
             physics.currentX = targetX;
             physics.currentY = targetY;
           } else if (hasSpread) {
-            // 펼쳐진 후에는 펼쳐진 위치를 기준으로
             const targetX = physics.baseX + physics.spreadX;
             const targetY = physics.baseY + physics.spreadY;
             
-            // 펼쳐진 위치로 부드럽게 이동
             const restoreStrength = 0.15;
             physics.vx += (targetX - physics.currentX) * restoreStrength;
             physics.vy += (targetY - physics.currentY) * restoreStrength;
           }
           
-          // 마우스 반발력 (펼쳐진 후에만 적용)
+          // 마우스 반발력 (성능 최적화: getBoundingClientRect 호출 최소화)
           if (hasSpread && isMouseInArea) {
+            const rect = card.getBoundingClientRect();
+            const cardCx = rect.left + rect.width / 2;
+            const cardCy = rect.top + rect.height / 2;
             const dx = mouseX - cardCx;
             const dy = mouseY - cardCy;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            const maxDist = 130; // 반응 거리
+            const distSq = dx*dx + dy*dy;
+            const maxDistSq = 16900; // 130^2
             
-            if (dist < maxDist && dist > 0) {
-              // 반발력 계산 (매우 약하게 - 도망가는 성향 최소화)
-              const force = (maxDist - dist) / maxDist;
-              const repulsionStrength = 1.5; // 힘의 강도를 크게 줄임
+            if (distSq < maxDistSq && distSq > 0) {
+              const dist = Math.sqrt(distSq);
+              const force = (130 - dist) / 130;
+              const repulsionStrength = 1.5;
               const fx = -(dx / dist) * force * repulsionStrength;
               const fy = -(dy / dist) * force * repulsionStrength;
               
-              // 가속도 적용
               physics.vx += fx;
               physics.vy += fy;
             }
@@ -898,7 +898,7 @@
       
       element.innerHTML = `
         <div class="cell-content">
-          <video class="card-video" autoplay loop muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; pointer-events: none;">
+          <video class="card-video" autoplay loop muted playsinline preload="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; pointer-events: none;">
             <source src="${videoUrl}" type="video/mp4">
           </video>
           <div style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: auto;">
@@ -909,10 +909,13 @@
         </div>
       `;
       
-      // 비디오 재생
+      // 비디오 재생 (지연 로딩)
       const video = element.querySelector('.card-video');
       if (video) {
-        video.play().catch(e => console.log('Video autoplay prevented:', e));
+        video.addEventListener('loadeddata', () => {
+          video.play().catch(() => {});
+        }, { once: true });
+        video.load();
       }
       
       // 카드 전체 클릭 이벤트 (아무 곳이나 클릭해도 카드 수 증가)
@@ -1308,9 +1311,8 @@
       const group = new THREE.Group();
       scene.add(group);
       
-      // 버블 카드 수를 대폭 증가 - 버블 밖에서 보면 안이 안 보일 정도로
-      // 최소 250개로 설정하여 구가 완전히 채워지도록
-      const count = Math.max(250, cardData.length * 3);
+      // 버블 카드 수 최적화 (성능 개선)
+      const count = Math.min(150, Math.max(50, cardData.length * 2));
       const radius = 8;
       const cardAspect = 9 / 16; // 릴스카드 비율
       const cardHeight = 2.2;
@@ -1324,7 +1326,8 @@
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
-        video.play();
+        video.preload = 'none';
+        video.play().catch(() => {});
         
         const texture = new THREE.VideoTexture(video);
         texture.minFilter = THREE.LinearFilter;
@@ -1546,8 +1549,14 @@
         });
       }
       
-      function animate() {
+      let lastFrameTime = 0;
+      function animate(currentTime) {
         requestAnimationFrame(animate);
+        
+        // 프레임 드롭 방지 (60fps 제한)
+        const deltaTime = currentTime - lastFrameTime;
+        if (deltaTime < 16) return;
+        lastFrameTime = currentTime;
         
         // 카메라 위치 업데이트
         const targetZ = bubbleState.cameraDistance;
@@ -1656,11 +1665,12 @@
       const opacity = 0.25; // 배경 투명도 25% (더 투명하게)
       
       let time = 0;
-      const speed = 0.005; // 애니메이션 속도 증가 (더 빠르고 명확하게 전환)
+      const speed = 0.005;
+      let lastUpdate = 0;
+      const throttleMs = 16; // ~60fps로 제한
       
       function lerpColor(color1, color2, t) {
-        // 더 명확한 전환을 위해 easing 함수 적용
-        const easedT = t * t * (3 - 2 * t); // smoothstep
+        const easedT = t * t * (3 - 2 * t);
         return {
           r: Math.round(color1.r + (color2.r - color1.r) * easedT),
           g: Math.round(color1.g + (color2.g - color1.g) * easedT),
@@ -1669,6 +1679,12 @@
       }
       
       function updateGradient() {
+        const now = performance.now();
+        if (now - lastUpdate < throttleMs) {
+          requestAnimationFrame(updateGradient);
+          return;
+        }
+        lastUpdate = now;
         time += speed;
         
         // 색상 인덱스 계산 (순환)
