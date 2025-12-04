@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Algorithmic Bubble – Card Flow</title>
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
   <style>
     * {
       box-sizing: border-box;
@@ -13,13 +14,12 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Pretendard",
-        "Noto Sans KR", "Noto Sans", sans-serif;
-      background: #111217;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", "Noto Sans", sans-serif;
       color: #f5f5f5;
     }
     body {
       position: relative;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25), rgba(255, 0, 191, 0.25));
     }
     /* --- Common Stage Styles --- */
     .stage {
@@ -37,21 +37,14 @@
       opacity: 1;
       pointer-events: auto;
     }
-    .stage-header {
-      position: absolute;
-      top: 24px;
-      left: 32px;
-      font-size: 12px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      opacity: 0.6;
-      z-index: 10;
-    }
     .stage-desc {
       position: absolute;
       top: 50px;
       left: 32px;
-      font-size: 14px;
+      font-size: 30px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 200;
+      font-variation-settings: "wght" 200;
       opacity: 0.8;
       max-width: 400px;
       line-height: 1.5;
@@ -59,7 +52,7 @@
     }
     /* --- Stage 1: Pile --- */
     #pile-stage {
-      background: radial-gradient(circle at center, #1a1c29 0%, #05060b 100%);
+      background: transparent;
     }
     .pile-area {
       position: relative;
@@ -74,7 +67,7 @@
       width: 120px;
       height: 200px;
       background: #f0f0f0;
-      border-radius: 16px;
+      border-radius: 5px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       cursor: pointer;
       display: flex;
@@ -85,6 +78,24 @@
       transition: transform 0.1s ease-out, box-shadow 0.2s;
       will-change: transform;
       aspect-ratio: 9 / 16;
+      overflow: hidden;
+    }
+    .pile-card video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    .pile-card .card-content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
     .pile-card:hover {
       z-index: 100 !important;
@@ -106,10 +117,9 @@
     }
     /* --- Stage 2 & 3: Grid --- */
     #grid-stage {
-      background: #e2e2e4;
+      background: transparent;
       color: #111;
     }
-    #grid-stage .stage-header,
     #grid-stage .stage-desc {
       color: #111;
     }
@@ -118,9 +128,9 @@
       width: 100%;
       height: 100vh;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      grid-auto-rows: 200px;
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      grid-template-rows: repeat(3, 1fr);
+      gap: 8px;
       padding: 12px;
       overflow: hidden;
       align-content: start;
@@ -128,7 +138,7 @@
     .grid-cell {
       position: relative;
       background: transparent;
-      border-radius: 16px;
+      border-radius: 8px;
       overflow: hidden;
       opacity: 0;
       transform: scale(0.9);
@@ -203,6 +213,9 @@
       padding: 12px 24px;
       border-radius: 30px;
       font-size: 14px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 200;
+      font-variation-settings: "wght" 200;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.5s;
@@ -212,48 +225,243 @@
     }
     /* --- Stage 4: Bubble --- */
     #bubble-stage {
-      background: radial-gradient(circle at top, #151b2e 0%, #000 100%);
+      background: transparent;
     }
     #three-canvas {
       position: absolute;
       inset: 0;
     }
+    .bubble-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 200;
+      font-variation-settings: "wght" 200;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 100;
+      white-space: nowrap;
+      backdrop-filter: blur(10px);
+    }
+    .bubble-hint.visible {
+      opacity: 1;
+      animation: twinkle 2s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    .new-bubble-btn {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 127, 152, 0.9);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 200;
+      font-variation-settings: "wght" 200;
+      border: none;
+      cursor: pointer;
+      z-index: 100;
+      transition: all 0.3s;
+      backdrop-filter: blur(10px);
+    }
+    .new-bubble-btn:hover {
+      background: rgba(255, 127, 152, 1);
+      transform: translateX(-50%) scale(1.05);
+      box-shadow: 0 4px 20px rgba(255, 127, 152, 0.5);
+    }
+    /* --- Logo --- */
+    .logo {
+      position: fixed;
+      z-index: 1000;
+      transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+      pointer-events: none;
+    }
+    .logo.start-screen {
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 400px;
+      height: auto;
+      opacity: 1;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% {
+        transform: translate(-50%, -50%) translateY(0px);
+      }
+      50% {
+        transform: translate(-50%, -50%) translateY(-20px);
+      }
+    }
+    .logo.small {
+      top:30px;
+      left: 30px;
+      right: auto;
+      transform: translate(0, 0);
+      width: 120px;
+      height: auto;
+      opacity: 1 !important;
+      animation: none;
+      z-index: 6000 !important;
+    }
+    /* --- Start Screen --- */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.8s ease;
+      pointer-events: auto;
+      background: transparent;
+    }
+    #start-screen .logo {
+      margin-bottom: 150px;
+    }
+    #start-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* --- Start Button --- */
+    @font-face {
+      font-family: "CirrusCumulus";
+      src: local("CirrusCumulus"), url("CirrusCumulus.woff2") format("woff2"),
+           url("CirrusCumulus.woff") format("woff"),
+           url("CirrusCumulus.ttf") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+    }
+    .start-button {
+      font-family: "CirrusCumulus", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-size: 48px;
+      font-weight: 300;
+      color: rgba(255, 255, 255, 0.95);
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      top:140px;  
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      opacity: 0;
+      animation: fadeInStart 1s ease 0.5s forwards, twinkle 2.5s ease-in-out infinite;
+      transition: all 0.3s ease;
+    }
+    .start-button:hover {
+      color: rgba(255, 255, 255, 1);
+    }
+    .start-button::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: width 0.4s ease;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
+    .start-button:hover::after {
+      width: 100%;
+    }
+    @keyframes fadeInStart {
+      to {
+        opacity: 1;
+      }
+    }
+    @keyframes twinkle {
+      0%, 100% {
+        opacity: 0.85;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 255, 255, 0.2);
+      }
+      50% {
+        opacity: 1;
+        text-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 50px rgba(255, 255, 255, 0.4);
+      }
+    }
+    /* --- Stage Description Text (하단 중앙) --- */
+    .stage-desc-bottom {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      font-size: 16px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 200;
+      font-variation-settings: "wght" 200;
+      letter-spacing: 0.05em;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      pointer-events: none;
+      color: rgba(0, 0, 0, 0.7);
+      max-width: 600px;
+      padding: 0 20px;
+      background-color: #AFFFEC;
+    }
+    .stage-desc-bottom.visible {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
+   <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
+  <!-- START SCREEN -->
+  <div id="start-screen">
+   
+    <button class="start-button" id="start-button">Start.</button>
+  </div>
+  <!-- Stage Description Text (하단 중앙) -->
+  <div class="stage-desc-bottom" id="stage-desc-bottom"></div>
   <!-- STAGE 1: PILE -->
-  <section id="pile-stage" class="stage active">
-    <div class="stage-header">STEP 1</div>
-    <div class="stage-desc">
-      흩어진 카드들 속에서 당신의 취향을 발견하세요.<br>
-      마우스를 움직여 카드를 헤치고, 하나를 선택해보세요.
-    </div>
+  <section id="pile-stage" class="stage">
+
+  
     <div class="pile-area" id="pile-area">
       <!-- Cards injected by JS -->
     </div>
   </section>
   <!-- STAGE 2 & 3: GRID -->
   <section id="grid-stage" class="stage">
-    <div class="stage-header">STEP 2 & 3</div>
-    <div class="stage-desc" id="grid-desc">
-      선택한 콘텐츠와 연관된 흐름이 이어집니다.<br>
-      '좋아요'를 눌러 알고리즘을 확장하세요.
-    </div>
+  
+   
     <div class="grid-container" id="grid-container">
       <!-- Grid cells injected by JS -->
     </div>
     <div class="drag-hint" id="drag-hint">
-      화면을 드래그하여 버블 속으로 들어가세요
+      스크롤 / 드래그
     </div>
   </section>
   <!-- STAGE 4: BUBBLE -->
   <section id="bubble-stage" class="stage">
     <div id="three-canvas"></div>
-    <div class="stage-header">STEP 4 · ALGORITHMIC BUBBLE</div>
     <div class="stage-desc">
       당신의 선택으로 완성된 알고리즘의 세계입니다.<br>
       드래그하여 탐험하세요.
     </div>
+    <div class="bubble-hint" id="bubble-hint-inside">스크롤 해서 버블 밖으로 나가기</div>
+    <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 비누 터트리기</div>
+    <button class="new-bubble-btn" id="new-bubble-btn" style="display: none;">또 다른 버블 만들기</button>
   </section>
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script>
@@ -279,23 +487,98 @@
     const pileArea = document.getElementById('pile-area');
     const gridContainer = document.getElementById('grid-container');
     const dragHint = document.getElementById('drag-hint');
+    const startScreen = document.getElementById('start-screen');
+    const startButton = document.getElementById('start-button');
+    const mainLogo = document.getElementById('main-logo');
+    const stageDescBottom = document.getElementById('stage-desc-bottom');
     const stages = {
       pile: document.getElementById('pile-stage'),
       grid: document.getElementById('grid-stage'),
       bubble: document.getElementById('bubble-stage')
     };
+    
+    // --- START SCREEN LOGIC ---
+    function initStartScreen() {
+      // Start 버튼 클릭 시 카드 선택 화면으로 전환
+      startButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        goToPileStage();
+      });
+      
+      // 시작 화면 클릭 시에도 전환 (Start 버튼 제외)
+      startScreen.addEventListener('click', (e) => {
+        if (e.target !== startButton && !startButton.contains(e.target)) {
+          goToPileStage();
+        }
+      });
+    }
+    
+    function goToPileStage() {
+      // 시작 화면 숨기기
+      startScreen.classList.add('hidden');
+      
+      // 로고를 좌측 상단으로 이동 (고정)
+      mainLogo.classList.remove('start-screen');
+      mainLogo.classList.add('small');
+      
+      // 설명 텍스트 표시
+      setTimeout(() => {
+        stageDescBottom.textContent = '마우스를 움직여 카드를 헤치고, 마음에 드는 카드 하나를 선택해보세요.';
+        stageDescBottom.classList.add('visible');
+      }, 400);
+      
+      // 카드 선택 화면 활성화
+      setTimeout(() => {
+        stages.pile.classList.add('active');
+        initPile();
+      }, 400);
+    }
+    
+    // 스테이지별 설명 텍스트 업데이트 함수
+    function updateStageDesc(text) {
+      stageDescBottom.textContent = text;
+      if (!stageDescBottom.classList.contains('visible')) {
+        stageDescBottom.classList.add('visible');
+      }
+    }
     // --- STAGE 1: PILE LOGIC ---
+    // 샘플 비디오 URL 배열 (맨 처음 카드용)
+    const pileVideoUrls = [
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+    ];
+    
     function initPile() {
       // Generate random cards
       for (let i = 0; i < 15; i++) {
         const topic = TOPICS[i % TOPICS.length];
         const card = document.createElement('div');
         card.className = 'pile-card';
+        const videoUrl = pileVideoUrls[i % pileVideoUrls.length];
         card.innerHTML = `
-          <div class="card-icon">${topic.icon}</div>
-          <div class="card-title">${topic.label}</div>
-          <div class="card-tag">#${topic.sub[0]}</div>
+          <video autoplay loop muted playsinline>
+            <source src="${videoUrl}" type="video/mp4">
+          </video>
+          <div class="card-content">
+            <div class="card-icon">${topic.icon}</div>
+            <div class="card-title" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">${topic.label}</div>
+            <div class="card-tag" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">#${topic.sub[0]}</div>
+          </div>
         `;
+        
+        // 비디오 재생
+        const video = card.querySelector('video');
+        if (video) {
+          video.play().catch(e => console.log('Video autoplay prevented:', e));
+        }
         
         // Random position near center
         const angle = Math.random() * Math.PI * 2;
@@ -307,66 +590,198 @@
         card.dataset.x = x;
         card.dataset.y = y;
         card.dataset.rot = rot;
+        card.dataset.topic = JSON.stringify(topic);
         // Click Event
-        card.addEventListener('click', () => selectCard(topic));
+        card.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectCard(topic, card);
+        });
         pileArea.appendChild(card);
       }
-      // Physics Effect - 카드가 흩어진 채로 유지되도록
-      let hasInteracted = false;
+      // Physics Effect - 실제 물리 기반으로 부드럽게 흩어지기
+      const cards = document.querySelectorAll('.pile-card');
+      const cardPhysics = {};
+      let hasSpread = false; // 카드가 펼쳐졌는지 추적
+      let initialSpreadTime = 0;
+      
+      // 각 카드에 물리 속성 초기화
+      cards.forEach((card, i) => {
+        cardPhysics[i] = {
+          vx: 0, // x 속도
+          vy: 0, // y 속도
+          baseX: parseFloat(card.dataset.x),
+          baseY: parseFloat(card.dataset.y),
+          spreadX: 0, // 펼쳐진 위치 X
+          spreadY: 0, // 펼쳐진 위치 Y
+          currentX: parseFloat(card.dataset.x),
+          currentY: parseFloat(card.dataset.y),
+          rot: parseFloat(card.dataset.rot)
+        };
+      });
+      
+      // 마우스 위치 추적
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let isMouseInArea = false;
+      
+      // 처음 호버 시 카드들을 타원형으로 펼치기 (위아래 간격 줄이기)
+      pileArea.addEventListener('mouseenter', () => {
+        isMouseInArea = true;
+        if (!hasSpread) {
+          // 처음 호버 시 카드들을 타원형으로 펼치기
+          const spreadRadiusX = 200; // 가로 반경
+          const spreadRadiusY = 120; // 세로 반경 (위아래 간격 줄임)
+          cards.forEach((card, i) => {
+            const physics = cardPhysics[i];
+            const angle = (i / cards.length) * Math.PI * 2;
+            physics.spreadX = Math.cos(angle) * spreadRadiusX;
+            physics.spreadY = Math.sin(angle) * spreadRadiusY; // Y축 반경을 줄여서 위아래 간격 축소
+            hasSpread = true;
+            initialSpreadTime = Date.now();
+          });
+        }
+      });
+      
+      pileArea.addEventListener('mouseleave', () => {
+        isMouseInArea = false;
+      });
+      
       document.addEventListener('mousemove', (e) => {
         if (!stages.pile.classList.contains('active')) return;
-        const mx = e.clientX;
-        const my = e.clientY;
-        const cards = document.querySelectorAll('.pile-card');
-        cards.forEach(card => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+      
+      // 물리 시뮬레이션 루프
+      function physicsUpdate() {
+        if (!stages.pile.classList.contains('active')) {
+          requestAnimationFrame(physicsUpdate);
+          return;
+        }
+        
+        const timeSinceSpread = Date.now() - initialSpreadTime;
+        const spreadDuration = 1000; // 펼쳐지는 애니메이션 시간
+        
+        cards.forEach((card, i) => {
+          const physics = cardPhysics[i];
           const rect = card.getBoundingClientRect();
           const cardCx = rect.left + rect.width / 2;
           const cardCy = rect.top + rect.height / 2;
-          const dx = mx - cardCx;
-          const dy = my - cardCy;
-          const dist = Math.sqrt(dx*dx + dy*dy);
-          const maxDist = 300;
-          if (dist < maxDist) {
-            hasInteracted = true;
-            const force = (maxDist - dist) / maxDist;
-            const moveX = -(dx / dist) * force * 150; // Repulsion strength
-            const moveY = -(dy / dist) * force * 150;
+          
+          // 처음 호버 시 펼쳐지는 애니메이션
+          if (hasSpread && timeSinceSpread < spreadDuration) {
+            const progress = Math.min(timeSinceSpread / spreadDuration, 1);
+            const easeProgress = 1 - Math.pow(1 - progress, 3); // ease-out
+            const targetX = physics.baseX + (physics.spreadX - physics.baseX) * easeProgress;
+            const targetY = physics.baseY + (physics.spreadY - physics.baseY) * easeProgress;
             
-            const baseX = parseFloat(card.dataset.x);
-            const baseY = parseFloat(card.dataset.y);
-            const rot = parseFloat(card.dataset.rot);
-            const newX = baseX + moveX;
-            const newY = baseY + moveY;
-            card.style.transform = `translate(${newX}px, ${newY}px) rotate(${rot}deg)`;
-            // Update base position to maintain spread
-            card.dataset.x = newX;
-            card.dataset.y = newY;
+            physics.currentX = targetX;
+            physics.currentY = targetY;
+          } else if (hasSpread) {
+            // 펼쳐진 후에는 펼쳐진 위치를 기준으로
+            const targetX = physics.baseX + physics.spreadX;
+            const targetY = physics.baseY + physics.spreadY;
+            
+            // 펼쳐진 위치로 부드럽게 이동
+            const restoreStrength = 0.15;
+            physics.vx += (targetX - physics.currentX) * restoreStrength;
+            physics.vy += (targetY - physics.currentY) * restoreStrength;
           }
+          
+          // 마우스 반발력 (펼쳐진 후에만 적용)
+          if (hasSpread && isMouseInArea) {
+            const dx = mouseX - cardCx;
+            const dy = mouseY - cardCy;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const maxDist = 130; // 반응 거리
+            
+            if (dist < maxDist && dist > 0) {
+              // 반발력 계산 (매우 약하게 - 도망가는 성향 최소화)
+              const force = (maxDist - dist) / maxDist;
+              const repulsionStrength = 1.5; // 힘의 강도를 크게 줄임
+              const fx = -(dx / dist) * force * repulsionStrength;
+              const fy = -(dy / dist) * force * repulsionStrength;
+              
+              // 가속도 적용
+              physics.vx += fx;
+              physics.vy += fy;
+            }
+          }
+          
+          // 마찰력 적용 (속도 감소 - 더 빠르게 정지)
+          const friction = 0.55;
+          physics.vx *= friction;
+          physics.vy *= friction;
+          
+          // 위치 업데이트
+          physics.currentX += physics.vx;
+          physics.currentY += physics.vy;
+          
+          // 변환 적용
+          card.style.transform = `translate(${physics.currentX}px, ${physics.currentY}px) rotate(${physics.rot}deg)`;
         });
-      });
+        
+        requestAnimationFrame(physicsUpdate);
+      }
+      
+      physicsUpdate();
     }
     // --- STAGE 2: TRANSITION TO GRID ---
-    function selectCard(topic) {
+    function selectCard(topic, clickedCard = null) {
       state.selectedTopic = topic;
       
-      // Switch Stage
-      stages.pile.classList.remove('active');
-      stages.grid.classList.add('active');
-      initGrid(topic);
+      // 클릭한 카드가 있으면 화면 가운데로 이동
+      if (clickedCard) {
+        const card = clickedCard;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const rect = card.getBoundingClientRect();
+        const currentX = rect.left + rect.width / 2;
+        const currentY = rect.top + rect.height / 2;
+        const targetX = centerX - currentX;
+        const targetY = centerY - currentY;
+        
+        card.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.6s';
+        card.style.zIndex = '1000';
+        
+        const baseX = parseFloat(card.dataset.x);
+        const baseY = parseFloat(card.dataset.y);
+        const rot = parseFloat(card.dataset.rot);
+        
+        card.style.transform = `translate(${baseX + targetX}px, ${baseY + targetY}px) rotate(0deg) scale(1.2)`;
+        
+        setTimeout(() => {
+          // Switch Stage
+          stages.pile.classList.remove('active');
+          stages.grid.classList.add('active');
+          updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+          initGrid(topic);
+        }, 600);
+      } else {
+        // Switch Stage
+        stages.pile.classList.remove('active');
+        stages.grid.classList.add('active');
+        updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+        initGrid(topic);
+      }
     }
     // --- STAGE 3: GRID EXPANSION ---
     function initGrid(topic) {
       gridContainer.innerHTML = '';
       
-      // Calculate how many cards can fit on screen - 화면에 꽉 차도록
-      const cardWidth = 120;
-      const cardHeight = 200;
-      const gap = 12;
+      // 3행으로 고정하고 카드 크기 조정
+      const rows = 3; // 3행 고정
+      const gap = 8;
       const padding = 12;
       const availableWidth = window.innerWidth - padding * 2;
       const availableHeight = window.innerHeight - padding * 2;
+      
+      // 3행에 맞춰 카드 높이 계산 (겹치지 않게)
+      const cardHeight = (availableHeight - (gap * (rows - 1))) / rows;
+      const cardWidth = cardHeight * (9 / 16); // 릴스카드 비율 유지
+      
+      // 열 수 계산
       const cols = Math.max(3, Math.floor(availableWidth / (cardWidth + gap)));
-      const rows = Math.max(2, Math.floor(availableHeight / (cardHeight + gap)));
       const totalCells = cols * rows;
       
       // 그리드 컨테이너 스타일 조정
@@ -401,23 +816,67 @@
         }
       }, 600);
     }
+    // 샘플 비디오 URL 배열 (그리드 카드용)
+    const gridVideoUrls = [
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+    ];
+    
     function setupCell(element, data, isMain) {
+      const cellIndex = parseInt(element.dataset.index) || 0;
+      const videoUrl = gridVideoUrls[cellIndex % gridVideoUrls.length];
+      
       element.innerHTML = `
         <div class="cell-content">
-          <div class="card-title" style="font-size: ${isMain ? '24px' : '16px'}">${data.label}</div>
-          <button class="like-btn">
-            <span>♥</span> Like
-          </button>
+          <video class="card-video" autoplay loop muted playsinline style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; pointer-events: none;">
+            <source src="${videoUrl}" type="video/mp4">
+          </video>
+          <div style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: auto;">
+            <div class="card-title" style="font-size: ${isMain ? '24px' : '16px'}; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${data.label}</div>
+            <button class="like-btn" style="background: rgba(255,255,255,0.9); pointer-events: auto; z-index: 3;">
+              <span>♥</span> Like
+            </button>
+          </div>
         </div>
       `;
-      const btn = element.querySelector('.like-btn');
-      btn.addEventListener('click', (e) => {
+      
+      // 비디오 재생
+      const video = element.querySelector('.card-video');
+      if (video) {
+        video.play().catch(e => console.log('Video autoplay prevented:', e));
+      }
+      
+      // 카드 전체 클릭 이벤트 (아무 곳이나 클릭해도 카드 수 증가)
+      element.style.cursor = 'pointer';
+      element.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!btn.classList.contains('liked')) {
+        const btn = element.querySelector('.like-btn');
+        if (btn && !btn.classList.contains('liked')) {
           btn.classList.add('liked');
           expandGrid();
         }
       });
+      
+      // 버튼 클릭 이벤트 (중복 방지)
+      const btn = element.querySelector('.like-btn');
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (!btn.classList.contains('liked')) {
+            btn.classList.add('liked');
+            expandGrid();
+          }
+        });
+      }
     }
     function expandGrid() {
       state.likes++;
@@ -440,69 +899,293 @@
       const remaining = document.querySelectorAll('.grid-cell:not(.active)').length;
       if (remaining <= 3 && !state.isGridFull) {
         state.isGridFull = true;
-        dragHint.classList.add('visible');
-        enableDragToBubble();
+        // 자동으로 버블 스테이지로 전환
+        setTimeout(() => {
+          goToBubbleStage();
+        }, 500);
       }
     }
+    let grid3DState = {
+      is3DMode: false,
+      scrollProgress: 0,
+      isTransitioning: false
+    };
+    
     function enableDragToBubble() {
       let isDragging = false;
       let startX = 0;
       let startY = 0;
-      let dragProgress = 0;
+      let dragDistance = 0;
+      let hasStarted3D = false;
       
-      const onDown = (e) => {
+      // 드래그 시작
+      gridContainer.addEventListener('mousedown', (e) => {
+        if (grid3DState.isTransitioning) return;
         isDragging = true;
-        startX = e.clientX || e.touches[0].clientX;
-        startY = e.clientY || e.touches[0].clientY;
-        gridContainer.style.transition = 'none';
-      };
-      const onUp = () => {
-        isDragging = false;
-        gridContainer.style.transition = '';
-        if (dragProgress > 0.7) {
-          goToBubbleStage();
-        } else {
-          // Reset
-          gridContainer.style.transform = '';
-          gridContainer.style.opacity = '';
-        }
-        dragProgress = 0;
-      };
-      const onMove = (e) => {
-        if (!isDragging) return;
-        const x = e.clientX || e.touches[0].clientX;
-        const y = e.clientY || e.touches[0].clientY;
-        const dx = x - startX;
-        const dy = y - startY;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const maxDist = 200;
-        dragProgress = Math.min(dist / maxDist, 1);
-        
-        // 그리드를 구 형태로 변형
-        const scale = 1 - dragProgress * 0.3;
-        const rotateX = (dy / maxDist) * Math.PI * 0.5;
-        const rotateY = (dx / maxDist) * Math.PI * 0.5;
-        
-        gridContainer.style.transform = `
-          scale(${scale})
-          rotateX(${rotateX}rad)
-          rotateY(${rotateY}rad)
-          perspective(1000px)
-        `;
-        gridContainer.style.opacity = 1 - dragProgress * 0.5;
-        
-        if (dragProgress > 0.7) {
-          goToBubbleStage();
-          isDragging = false;
-        }
-      };
-      document.addEventListener('mousedown', onDown);
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+        startX = e.clientX;
+        startY = e.clientY;
+        dragDistance = 0;
+        hasStarted3D = false;
+        gridContainer.style.cursor = 'grabbing';
+      });
       
-      document.addEventListener('touchstart', onDown);
-      document.addEventListener('touchmove', onMove);
-      document.addEventListener('touchend', onUp);
+      // 드래그 중
+      gridContainer.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        dragDistance = Math.sqrt(dx * dx + dy * dy);
+        
+        // 드래그가 시작되면 바로 3D 모드로 전환
+        if (dragDistance > 10 && !hasStarted3D) {
+          hasStarted3D = true;
+          grid3DState.is3DMode = true;
+          grid3DState.isTransitioning = true;
+          
+          // 그리드를 구 형태로 변형 (광각 효과)
+          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+          const radius = 8;
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          
+          cells.forEach((cell, i) => {
+            const rect = cell.getBoundingClientRect();
+            const cellX = rect.left + rect.width / 2;
+            const cellY = rect.top + rect.height / 2;
+            
+            // 구 형태로 변형
+            const phi = Math.acos(-1 + (2 * i) / cells.length);
+            const theta = Math.sqrt(cells.length * Math.PI) * phi;
+            
+            const x = Math.sin(phi) * Math.cos(theta) * radius;
+            const y = Math.sin(phi) * Math.sin(theta) * radius;
+            const z = Math.cos(phi) * radius;
+            
+            const translateX = (x / radius) * 200;
+            const translateY = (y / radius) * 200;
+            const translateZ = (z / radius) * 200;
+            
+            cell.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(0.9)`;
+            cell.style.transformStyle = 'preserve-3d';
+          });
+          
+          // 그리드 컨테이너에 perspective 적용
+          gridContainer.style.perspective = '2000px';
+          gridContainer.style.transformStyle = 'preserve-3d';
+          
+          setTimeout(() => {
+            grid3DState.isTransitioning = false;
+            dragHint.textContent = '계속 드래그하여 3D 공간으로 들어가세요';
+          }, 800);
+        }
+        
+        // 드래그 진행도에 따라 3D로 전환
+        if (hasStarted3D && !grid3DState.isTransitioning) {
+          const maxDragDistance = 300;
+          const progress = Math.min(dragDistance / maxDragDistance, 1);
+          grid3DState.scrollProgress = progress;
+          
+          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+          const radius = 8;
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          
+          cells.forEach((cell, i) => {
+            const phi = Math.acos(-1 + (2 * i) / cells.length);
+            const theta = Math.sqrt(cells.length * Math.PI) * phi;
+            
+            // 목표 구 좌표
+            const targetX = Math.sin(phi) * Math.cos(theta) * radius;
+            const targetY = Math.sin(phi) * Math.sin(theta) * radius;
+            const targetZ = Math.cos(phi) * radius;
+            
+            // 현재 2D 위치에서 3D 구 위치로 보간
+            const rect = cell.getBoundingClientRect();
+            const currentX = (rect.left + rect.width / 2 - centerX) / 200 * radius;
+            const currentY = (rect.top + rect.height / 2 - centerY) / 200 * radius;
+            
+            const finalX = currentX * (1 - progress) + targetX * progress;
+            const finalY = currentY * (1 - progress) + targetY * progress;
+            const finalZ = targetZ * progress;
+            
+            // 3D 변환 적용
+            const scale = 0.9 + progress * 0.1;
+            const translateX = finalX * 200 / radius;
+            const translateY = finalY * 200 / radius;
+            const translateZ = finalZ * 200 / radius;
+            
+            // 카드가 중심을 향하도록 회전 계산
+            const distance = Math.sqrt(finalX * finalX + finalY * finalY + finalZ * finalZ);
+            if (distance > 0.1 && progress > 0.2) {
+              const rotY = Math.atan2(finalX, finalZ) * 180 / Math.PI;
+              const rotX = -Math.asin(finalY / distance) * 180 / Math.PI;
+              
+              cell.style.transition = 'transform 0.1s ease-out';
+              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateY(${rotY * progress}deg) rotateX(${rotX * progress}deg)`;
+            } else {
+              cell.style.transition = 'transform 0.1s ease-out';
+              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale})`;
+            }
+          });
+          
+          // 그리드 컨테이너에도 perspective 효과 적용
+          const perspectiveAmount = 2000 + progress * 1000;
+          gridContainer.style.perspective = `${perspectiveAmount}px`;
+          
+          // 드래그가 충분히 진행되면 버블 스테이지로 전환
+          if (progress >= 0.85) {
+            goToBubbleStage();
+            isDragging = false;
+          }
+        }
+      });
+      
+      // 드래그 종료
+      window.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          gridContainer.style.cursor = 'grab';
+          
+          // 드래그가 충분하지 않으면 되돌리기
+          if (grid3DState.scrollProgress < 0.5 && hasStarted3D) {
+            const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+            cells.forEach((cell) => {
+              cell.style.transition = 'transform 0.5s ease-out';
+              cell.style.transform = '';
+            });
+            grid3DState.is3DMode = false;
+            grid3DState.scrollProgress = 0;
+            hasStarted3D = false;
+          }
+        }
+      });
+      
+      // 터치 이벤트 지원
+      gridContainer.addEventListener('touchstart', (e) => {
+        if (grid3DState.isTransitioning) return;
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragDistance = 0;
+        hasStarted3D = false;
+      });
+      
+      gridContainer.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        dragDistance = Math.sqrt(dx * dx + dy * dy);
+        
+        // 마우스 이벤트와 동일한 로직 적용
+        if (dragDistance > 10 && !hasStarted3D) {
+          hasStarted3D = true;
+          grid3DState.is3DMode = true;
+          grid3DState.isTransitioning = true;
+          
+          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+          const radius = 8;
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          
+          cells.forEach((cell, i) => {
+            const phi = Math.acos(-1 + (2 * i) / cells.length);
+            const theta = Math.sqrt(cells.length * Math.PI) * phi;
+            
+            const x = Math.sin(phi) * Math.cos(theta) * radius;
+            const y = Math.sin(phi) * Math.sin(theta) * radius;
+            const z = Math.cos(phi) * radius;
+            
+            const translateX = (x / radius) * 200;
+            const translateY = (y / radius) * 200;
+            const translateZ = (z / radius) * 200;
+            
+            cell.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(0.9)`;
+            cell.style.transformStyle = 'preserve-3d';
+          });
+          
+          gridContainer.style.perspective = '2000px';
+          gridContainer.style.transformStyle = 'preserve-3d';
+          
+          setTimeout(() => {
+            grid3DState.isTransitioning = false;
+          }, 800);
+        }
+        
+        if (hasStarted3D && !grid3DState.isTransitioning) {
+          const maxDragDistance = 300;
+          const progress = Math.min(dragDistance / maxDragDistance, 1);
+          grid3DState.scrollProgress = progress;
+          
+          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+          const radius = 8;
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          
+          cells.forEach((cell, i) => {
+            const phi = Math.acos(-1 + (2 * i) / cells.length);
+            const theta = Math.sqrt(cells.length * Math.PI) * phi;
+            
+            const targetX = Math.sin(phi) * Math.cos(theta) * radius;
+            const targetY = Math.sin(phi) * Math.sin(theta) * radius;
+            const targetZ = Math.cos(phi) * radius;
+            
+            const rect = cell.getBoundingClientRect();
+            const currentX = (rect.left + rect.width / 2 - centerX) / 200 * radius;
+            const currentY = (rect.top + rect.height / 2 - centerY) / 200 * radius;
+            
+            const finalX = currentX * (1 - progress) + targetX * progress;
+            const finalY = currentY * (1 - progress) + targetY * progress;
+            const finalZ = targetZ * progress;
+            
+            const scale = 0.9 + progress * 0.1;
+            const translateX = finalX * 200 / radius;
+            const translateY = finalY * 200 / radius;
+            const translateZ = finalZ * 200 / radius;
+            
+            const distance = Math.sqrt(finalX * finalX + finalY * finalY + finalZ * finalZ);
+            if (distance > 0.1 && progress > 0.2) {
+              const rotY = Math.atan2(finalX, finalZ) * 180 / Math.PI;
+              const rotX = -Math.asin(finalY / distance) * 180 / Math.PI;
+              
+              cell.style.transition = 'transform 0.1s ease-out';
+              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateY(${rotY * progress}deg) rotateX(${rotX * progress}deg)`;
+            } else {
+              cell.style.transition = 'transform 0.1s ease-out';
+              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale})`;
+            }
+          });
+          
+          const perspectiveAmount = 2000 + progress * 1000;
+          gridContainer.style.perspective = `${perspectiveAmount}px`;
+          
+          if (progress >= 0.85) {
+            goToBubbleStage();
+            isDragging = false;
+          }
+        }
+      });
+      
+      window.addEventListener('touchend', () => {
+        if (isDragging) {
+          isDragging = false;
+          
+          if (grid3DState.scrollProgress < 0.5 && hasStarted3D) {
+            const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
+            cells.forEach((cell) => {
+              cell.style.transition = 'transform 0.5s ease-out';
+              cell.style.transform = '';
+            });
+            grid3DState.is3DMode = false;
+            grid3DState.scrollProgress = 0;
+            hasStarted3D = false;
+          }
+        }
+      });
     }
     function goToBubbleStage() {
       // 그리드의 카드들을 수집하여 구로 변환
@@ -530,6 +1213,7 @@
       setTimeout(() => {
         stages.grid.classList.remove('active');
         stages.bubble.classList.add('active');
+        updateStageDesc('당신의 선택으로 완성된 알고리즘의 세계입니다. 드래그하여 탐험하세요.');
         
         if (!state.bubbleInited) {
           initThreeJS(cardData);
@@ -558,29 +1242,78 @@
       // Cards on Sphere - 릴스카드 형태로 통일
       const group = new THREE.Group();
       scene.add(group);
-      const count = cardData.length > 0 ? cardData.length : 40;
+      
+      // 버블 카드 수를 대폭 증가 - 버블 밖에서 보면 안이 안 보일 정도로
+      // 최소 250개로 설정하여 구가 완전히 채워지도록
+      const count = Math.max(250, cardData.length * 3);
       const radius = 8;
       const cardAspect = 9 / 16; // 릴스카드 비율
       const cardHeight = 2.2;
       const cardWidth = cardHeight * cardAspect;
+      
+      // 비디오 텍스처 생성 함수
+      function createVideoTexture(videoUrl) {
+        const video = document.createElement('video');
+        video.src = videoUrl;
+        video.crossOrigin = 'anonymous';
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.play();
+        
+        const texture = new THREE.VideoTexture(video);
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        return texture;
+      }
+      
+      // 샘플 비디오 URL 배열 (실제 사용 시 원하는 비디오 URL로 교체)
+      const videoUrls = [
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+      ];
       
       const cards = [];
       for (let i = 0; i < count; i++) {
         const phi = Math.acos(-1 + (2 * i) / count);
         const theta = Math.sqrt(count * Math.PI) * phi;
         const geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
-        const material = new THREE.MeshBasicMaterial({ 
-          color: 0xffffff,
-          side: THREE.DoubleSide
-        });
+        
+        // 비디오 텍스처 적용 (모든 카드에 적용)
+        let material;
+        try {
+          const videoTexture = createVideoTexture(videoUrls[i % videoUrls.length]);
+          material = new THREE.MeshBasicMaterial({ 
+            map: videoTexture,
+            side: THREE.DoubleSide
+          });
+        } catch (e) {
+          // 비디오 로드 실패 시 색상으로 대체
+          console.log('Video load failed, using color:', e);
+          material = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff,
+            side: THREE.DoubleSide
+          });
+          material.color.setHSL(Math.random(), 0.7, 0.5);
+        }
+        
         const card = new THREE.Mesh(geometry, material);
         
         // 그리드에서 전환된 경우 초기 위치를 그리드 위치로 설정
-        if (cardData && cardData[i]) {
+        if (cardData && cardData[i % cardData.length]) {
+          const dataIndex = i % cardData.length;
           card.position.set(
-            cardData[i].x,
-            cardData[i].y,
-            cardData[i].z || 0
+            cardData[dataIndex].x,
+            cardData[dataIndex].y,
+            cardData[dataIndex].z || 0
           );
           card.userData.targetPosition = new THREE.Vector3();
           card.userData.targetPosition.setFromSphericalCoords(radius, phi, theta);
@@ -601,18 +1334,27 @@
         card.userData.originalRotation = card.rotation.clone();
         card.userData.velocity = new THREE.Vector3(0, 0, 0);
         
-        // Add some content texture (simplified color for now)
-        card.material.color.setHSL(Math.random(), 0.7, 0.5);
         group.add(card);
         cards.push(card);
       }
       
       camera.position.z = 0.1; // Inside the sphere initially
       
+      // 안내 문구 요소
+      const hintInside = document.getElementById('bubble-hint-inside');
+      const hintOutside = document.getElementById('bubble-hint-outside');
+      const newBubbleBtn = document.getElementById('new-bubble-btn');
+      
+      // 처음에는 안쪽 안내 문구 표시
+      setTimeout(() => {
+        if (hintInside) hintInside.classList.add('visible');
+      }, 1000);
+      
       // Interaction
       let isDragging = false;
       let prevX = 0;
       let prevY = 0;
+      let shakeIntensity = 0;
       
       container.addEventListener('mousedown', e => {
         isDragging = true;
@@ -644,10 +1386,28 @@
           if (!bubbleState.isOutside) {
             bubbleState.isOutside = true;
             bubbleState.clickCount = 0; // 바깥으로 나가면 클릭 카운터 리셋
+            // 안쪽 안내 문구 숨기고 바깥쪽 안내 문구 표시
+            if (hintInside) hintInside.classList.remove('visible');
+            if (hintOutside) {
+              hintOutside.style.display = 'block';
+              setTimeout(() => hintOutside.classList.add('visible'), 100);
+            }
+            if (newBubbleBtn) {
+              newBubbleBtn.style.display = 'block';
+            }
           }
         } else {
           bubbleState.isOutside = false;
           bubbleState.clickCount = 0; // 안으로 들어오면 클릭 카운터 리셋
+          // 바깥쪽 안내 문구 숨기고 안쪽 안내 문구 표시
+          if (hintOutside) {
+              hintOutside.classList.remove('visible');
+              setTimeout(() => hintOutside.style.display = 'none', 500);
+            }
+          if (hintInside) hintInside.classList.add('visible');
+          if (newBubbleBtn) {
+            newBubbleBtn.style.display = 'none';
+          }
         }
       });
       
@@ -663,29 +1423,68 @@
         }
         bubbleState.lastClickTime = now;
         
+        // 클릭 시 버블이 울렁거리는 모션
+        shakeIntensity = 0.3;
+        
         if (bubbleState.clickCount >= 5) {
           explodeBubble(cards);
         }
       });
       
+      // 또 다른 버블 만들기 버튼
+      if (newBubbleBtn) {
+        newBubbleBtn.addEventListener('click', () => {
+          // 첫 번째 스테이지로 돌아가기
+          stages.bubble.classList.remove('active');
+          stages.pile.classList.add('active');
+          state.bubbleInited = false;
+          state.isGridFull = false;
+          state.likes = 0;
+          state.selectedTopic = null;
+          
+          // 페이지 새로고침 대신 초기화
+          location.reload();
+        });
+      }
+      
       function explodeBubble(cards) {
+        if (bubbleState.isExploding) return; // 이미 터지고 있으면 반복 방지
         bubbleState.isExploding = true;
-        cards.forEach((card, i) => {
-          const direction = new THREE.Vector3()
-            .subVectors(card.position, new THREE.Vector3(0, 0, 0))
-            .normalize();
+        
+        // 카드들을 Y 좌표(높이)에 따라 정렬하여 윗 행부터 무너지게
+        const sortedCards = cards.map((card, i) => ({
+          card,
+          y: card.position.y,
+          index: i
+        })).sort((a, b) => b.y - a.y); // 위에서 아래로 정렬
+        
+        sortedCards.forEach((item, delayIndex) => {
+          const card = item.card;
+          const delay = delayIndex * 20; // 윗 행부터 순차적으로 시작
           
-          const speed = 0.15 + Math.random() * 0.15;
-          card.userData.velocity = direction.clone().multiplyScalar(speed);
-          
-          // 랜덤 회전 속도 추가
-          if (!card.userData.rotationSpeed) {
-            card.userData.rotationSpeed = new THREE.Vector3(
-              (Math.random() - 0.5) * 0.15,
-              (Math.random() - 0.5) * 0.15,
-              (Math.random() - 0.5) * 0.15
+          setTimeout(() => {
+            // 중력 적용 - 아래로 떨어지도록
+            const gravity = -0.02; // 아래 방향
+            const horizontalSpread = (Math.random() - 0.5) * 0.1; // 수평 확산
+            const forwardSpread = (Math.random() - 0.5) * 0.1; // 전방 확산
+            
+            card.userData.velocity = new THREE.Vector3(
+              horizontalSpread,
+              gravity, // 아래로 떨어짐
+              forwardSpread
             );
-          }
+            
+            // 랜덤 회전 속도 추가
+            card.userData.rotationSpeed = new THREE.Vector3(
+              (Math.random() - 0.5) * 0.2,
+              (Math.random() - 0.5) * 0.2,
+              (Math.random() - 0.5) * 0.2
+            );
+            
+            // 카드가 떨어지는 속도 증가
+            card.userData.gravity = gravity;
+            card.userData.fallSpeed = 0;
+          }, delay);
         });
       }
       
@@ -695,6 +1494,21 @@
         // 카메라 위치 업데이트
         const targetZ = bubbleState.cameraDistance;
         camera.position.z += (targetZ - camera.position.z) * 0.1;
+        
+        // 버블 울렁거리는 모션 (클릭 시)
+        if (shakeIntensity > 0 && !bubbleState.isExploding) {
+          const shakeX = (Math.random() - 0.5) * shakeIntensity;
+          const shakeY = (Math.random() - 0.5) * shakeIntensity;
+          const shakeZ = (Math.random() - 0.5) * shakeIntensity;
+          
+          group.position.set(shakeX, shakeY, shakeZ);
+          shakeIntensity *= 0.9; // 점점 감소
+          
+          if (shakeIntensity < 0.01) {
+            shakeIntensity = 0;
+            group.position.set(0, 0, 0);
+          }
+        }
         
         // 그리드에서 구로 전환 애니메이션
         cards.forEach(card => {
@@ -716,28 +1530,46 @@
           }
         });
         
-        // 폭발 애니메이션
+        // 폭발 애니메이션 - 비눗방울 터지듯이 (투명도 변경 없이)
         if (bubbleState.isExploding) {
           cards.forEach(card => {
             if (card.userData.velocity) {
+              // 중력 적용 - 아래로 가속
+              if (card.userData.gravity !== undefined) {
+                card.userData.fallSpeed = (card.userData.fallSpeed || 0) + card.userData.gravity;
+                card.userData.velocity.y = card.userData.fallSpeed;
+              }
+              
               card.position.add(card.userData.velocity);
+              
+              // 카드가 화면 밖으로 나가면 제거 (투명도 변경 없이)
+              const distance = Math.sqrt(
+                card.position.x * card.position.x + 
+                card.position.y * card.position.y + 
+                card.position.z * card.position.z
+              );
+              
+              if (distance > 50 || card.position.y < -30) {
+                // 카드를 씬에서 제거
+                group.remove(card);
+                card.geometry.dispose();
+                card.material.dispose();
+              }
             }
             
             if (card.userData.rotationSpeed) {
               card.rotation.x += card.userData.rotationSpeed.x;
               card.rotation.y += card.userData.rotationSpeed.y;
               card.rotation.z += card.userData.rotationSpeed.z;
+              
+              // 회전 감속
+              card.userData.rotationSpeed.multiplyScalar(0.98);
             }
             
-            // Fade out
-            if (!card.material.transparent) {
-              card.material.transparent = true;
-            }
-            card.material.opacity = Math.max(0, (card.material.opacity || 1) - 0.015);
-            
-            // Slow down
+            // 수평 속도 감소
             if (card.userData.velocity) {
-              card.userData.velocity.multiplyScalar(0.98);
+              card.userData.velocity.x *= 0.99;
+              card.userData.velocity.z *= 0.99;
             }
           });
         }
@@ -753,9 +1585,78 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
     }
+    // --- Animated Gradient Background ---
+    function initAnimatedGradient() {
+      // 네 가지 색상 조합
+      const colors = [
+        { r: 255, g: 255, b: 255 }, // #FFFFFF
+        { r: 255, g: 0, b: 191 },   // #FF00BF
+        { r: 255, g: 0, b: 0 },     // #FF0000
+        { r: 255, g: 55, b: 0 }     // #FF3700
+      ];
+      
+      const opacity = 0.25; // 배경 투명도 25% (더 투명하게)
+      
+      let time = 0;
+      const speed = 0.005; // 애니메이션 속도 증가 (더 빠르고 명확하게 전환)
+      
+      function lerpColor(color1, color2, t) {
+        // 더 명확한 전환을 위해 easing 함수 적용
+        const easedT = t * t * (3 - 2 * t); // smoothstep
+        return {
+          r: Math.round(color1.r + (color2.r - color1.r) * easedT),
+          g: Math.round(color1.g + (color2.g - color1.g) * easedT),
+          b: Math.round(color1.b + (color2.b - color1.b) * easedT)
+        };
+      }
+      
+      function updateGradient() {
+        time += speed;
+        
+        // 색상 인덱스 계산 (순환)
+        const colorProgress = (time * colors.length) % colors.length;
+        const colorIndex1 = Math.floor(colorProgress) % colors.length;
+        const colorIndex2 = (colorIndex1 + 1) % colors.length;
+        const colorIndex3 = (colorIndex1 + 2) % colors.length;
+        const t = colorProgress - Math.floor(colorProgress);
+        
+        // 중심 색상 (현재 -> 다음)
+        const centerColor1 = colors[colorIndex1];
+        const centerColor2 = colors[colorIndex2];
+        const centerColor = lerpColor(centerColor1, centerColor2, t);
+        
+        // 중간 색상 (다음 -> 그 다음)
+        const midColor1 = colors[colorIndex2];
+        const midColor2 = colors[colorIndex3];
+        const midColor = lerpColor(midColor1, midColor2, t);
+        
+        // 외곽 색상 (그 다음 -> 그 다음 다음)
+        const outerColor1 = colors[colorIndex3];
+        const outerColor2 = colors[(colorIndex3 + 1) % colors.length];
+        const outerColor = lerpColor(outerColor1, outerColor2, t);
+        
+        // 각도 변화 (원형으로 중심 위치 변경, 더 빠르게)
+        const angle = time * 1.2; // 각도 변화 속도 증가 (더 빠르게)
+        const centerX = 50 + Math.cos(angle) * 40; // 중심 X 위치 (10% ~ 90%, 더 넓게)
+        const centerY = 50 + Math.sin(angle * 1.5) * 40; // 중심 Y 위치 (비대칭 움직임, 더 넓게)
+        
+        // Radial 그라데이션 생성 (투명도 35% 적용, 각도 변화)
+        const gradient = `radial-gradient(circle at ${centerX}% ${centerY}%, 
+          rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, ${opacity}) 0%, 
+          rgba(${midColor.r}, ${midColor.g}, ${midColor.b}, ${opacity}) 50%, 
+          rgba(${outerColor.r}, ${outerColor.g}, ${outerColor.b}, ${opacity}) 100%)`;
+        
+        document.body.style.background = gradient;
+        
+        requestAnimationFrame(updateGradient);
+      }
+      
+      updateGradient();
+    }
+    
     // Start
-    initPile();
+    initAnimatedGradient();
+    initStartScreen();
   </script>
 </body>
-</html>
 </html>
