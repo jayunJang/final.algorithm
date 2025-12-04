@@ -262,7 +262,7 @@
     }
     .new-bubble-btn {
       position: absolute;
-      bottom: 60px;
+      bottom: 80px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(120, 120, 120, 0.9);
@@ -816,14 +816,14 @@
           // Switch Stage
           stages.pile.classList.remove('active');
           stages.grid.classList.add('active');
-          updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+          updateStageDesc('좋아요를 눌러 알고리즘을 확장하세요.')
           initGrid(topic);
         }, 600);
       } else {
         // Switch Stage
         stages.pile.classList.remove('active');
         stages.grid.classList.add('active');
-        updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+        updateStageDesc('좋아요를 눌러 알고리즘을 확장하세요.');
         initGrid(topic);
       }
     }
@@ -1299,18 +1299,49 @@
       isExploding: false
     };
     
+    // 여러 버블을 관리하기 위한 전역 변수
+    let allBubbles = {
+      scene: null,
+      camera: null,
+      renderer: null,
+      groups: [], // 각 버블의 그룹 배열
+      currentGroupIndex: -1, // 현재 활성화된 버블 인덱스
+      animateId: null,
+      resizeHandlerAdded: false
+    };
+    
     function initThreeJS(cardData = []) {
       const container = document.getElementById('three-canvas');
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      container.appendChild(renderer.domElement);
+      // 첫 번째 버블인 경우 scene, camera, renderer 초기화
+      if (!allBubbles.scene) {
+        allBubbles.scene = new THREE.Scene();
+        allBubbles.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        allBubbles.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        allBubbles.renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(allBubbles.renderer.domElement);
+        allBubbles.camera.position.z = 0.1;
+      }
+      
+      const scene = allBubbles.scene;
+      const camera = allBubbles.camera;
+      const renderer = allBubbles.renderer;
       
       // Cards on Sphere - 릴스카드 형태로 통일
       const group = new THREE.Group();
       scene.add(group);
+      
+      // 새 버블 그룹을 배열에 추가
+      allBubbles.groups.push({
+        group: group,
+        cards: [],
+        state: {
+          isExploding: false,
+          clickCount: 0,
+          lastClickTime: 0
+        }
+      });
+      allBubbles.currentGroupIndex = allBubbles.groups.length - 1;
       
       // 버블 카드 수 (성능과 품질의 균형)
       const count = Math.min(200, Math.max(80, cardData.length * 3));
@@ -1475,21 +1506,23 @@
       
       // 바깥에서 구를 5번 이상 클릭하면 터지기
       container.addEventListener('click', (e) => {
-        if (!bubbleState.isOutside || bubbleState.isExploding) return;
+        if (!bubbleState.isOutside) return;
+        const currentBubble = allBubbles.groups[allBubbles.currentGroupIndex];
+        if (!currentBubble || currentBubble.state.isExploding) return;
         
         const now = Date.now();
-        if (now - bubbleState.lastClickTime < 1000) {
-          bubbleState.clickCount++;
+        if (now - currentBubble.state.lastClickTime < 1000) {
+          currentBubble.state.clickCount++;
         } else {
-          bubbleState.clickCount = 1;
+          currentBubble.state.clickCount = 1;
         }
-        bubbleState.lastClickTime = now;
+        currentBubble.state.lastClickTime = now;
         
         // 클릭 시 버블이 울렁거리는 모션
         shakeIntensity = 0.3;
         
-        if (bubbleState.clickCount >= 5) {
-          explodeBubble(cards);
+        if (currentBubble.state.clickCount >= 5) {
+          explodeBubble(currentBubble.cards, currentBubble);
         }
       });
       
@@ -1596,11 +1629,11 @@
             const lookAt = new THREE.Vector3(0, 0, 0);
             card.lookAt(lookAt);
           }
-        });
-        
-        // 폭발 애니메이션 - 비눗방울 터지듯이 (투명도 변경 없이)
-        if (bubbleState.isExploding) {
-          cards.forEach(card => {
+          });
+          
+          // 폭발 애니메이션 - 비눗방울 터지듯이 (투명도 변경 없이)
+          if (bubbleGroup.state.isExploding) {
+            bubbleGroup.cards.forEach(card => {
             if (card.userData.velocity) {
               // 중력 적용 - 아래로 가속
               if (card.userData.gravity !== undefined) {
