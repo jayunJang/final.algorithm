@@ -232,24 +232,25 @@
       inset: 0;
     }
     .bubble-hint {
-      position: absolute;
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       color: white;
-      padding: 16px 32px;
+      padding: 20px 40px;
       border-radius: 30px;
-      font-size: 16px;
+      font-size: 18px;
       font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
       font-weight: 200;
       font-variation-settings: "wght" 200;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.5s;
-      z-index: 100;
+      z-index: 10000;
       white-space: nowrap;
       backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
     .bubble-hint.visible {
       opacity: 1;
@@ -261,10 +262,10 @@
     }
     .new-bubble-btn {
       position: absolute;
-      bottom: 40px;
+      bottom: 60px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 127, 152, 0.9);
+      background: rgba(120, 120, 120, 0.9);
       color: white;
       padding: 14px 28px;
       border-radius: 30px;
@@ -279,7 +280,7 @@
       backdrop-filter: blur(10px);
     }
     .new-bubble-btn:hover {
-      background: rgba(255, 127, 152, 1);
+      background: rgb(39, 39, 39);
       transform: translateX(-50%) scale(1.05);
       box-shadow: 0 4px 20px rgba(255, 127, 152, 0.5);
     }
@@ -1311,8 +1312,8 @@
       const group = new THREE.Group();
       scene.add(group);
       
-      // 버블 카드 수 최적화 (성능 개선)
-      const count = Math.min(150, Math.max(50, cardData.length * 2));
+      // 버블 카드 수 (성능과 품질의 균형)
+      const count = Math.min(200, Math.max(80, cardData.length * 3));
       const radius = 8;
       const cardAspect = 9 / 16; // 릴스카드 비율
       const cardHeight = 2.2;
