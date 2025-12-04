@@ -284,6 +284,43 @@
       transform: translateX(-50%) scale(1.05);
       box-shadow: 0 4px 20px rgba(255, 127, 152, 0.5);
     }
+    /* --- Mouse Following Text --- */
+    .mouse-follow-text {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10001;
+      display: flex;
+      gap: 8px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 500;
+      font-variation-settings: "wght" 500;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      will-change: transform;
+    }
+    .mouse-follow-text.visible {
+      opacity: 1;
+    }
+    .mouse-follow-text .char {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: #AFFFEC;
+      color: #1a1a1a;
+      font-size: 14px;
+      line-height: 1;
+      transition: transform 0.1s ease-out;
+      transform: translate(-50%, -50%);
+    }
+    .mouse-follow-text .char.space {
+      width: 12px;
+      background-color: transparent;
+    }
     /* --- Logo --- */
     .logo {
       position: fixed;
@@ -427,6 +464,8 @@
 </head>
 <body>
    <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
+  <!-- Mouse Following Text (전체 화면에서 작동) -->
+  <div class="mouse-follow-text" id="mouse-follow-text"></div>
   <!-- START SCREEN -->
   <div id="start-screen">
    
@@ -456,7 +495,6 @@
   <!-- STAGE 4: BUBBLE -->
   <section id="bubble-stage" class="stage">
     <div id="three-canvas"></div>
-   
     <div class="bubble-hint" id="bubble-hint-inside">스크롤 해서 버블 밖으로 나가기</div>
     <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 비누 터트리기</div>
     <button class="new-bubble-btn" id="new-bubble-btn" style="display: none;">또 다른 버블 만들기</button>
@@ -1728,6 +1766,99 @@
       
       updateGradient();
     }
+    
+    // --- Mouse Following Text (전체 화면에서 작동) ---
+    const mouseFollowText = document.getElementById('mouse-follow-text');
+    const followText = '당신의 관심사로 만들어지는 알고리즘 세계를 탐험하세요';
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let targetX = mouseX;
+    let targetY = mouseY;
+    
+    // 꼬리 효과 변수
+    let tailX = mouseX;
+    let tailY = mouseY;
+    const tailFollow = 0.25; // 더 가깝게 따라오기
+    const trail = [];
+    const charSpacing = 32; // 글자 간 간격 (px)
+    
+    if (mouseFollowText) {
+      mouseFollowText.innerHTML = '';
+      followText.split('').forEach((char, idx) => {
+        const charSpan = document.createElement('span');
+        charSpan.className = 'char' + (char === ' ' ? ' space' : '');
+        charSpan.textContent = char === ' ' ? '' : char;
+        charSpan.style.color = '#1a1a1a';
+        mouseFollowText.appendChild(charSpan);
+        trail.push({
+          element: charSpan,
+          x: mouseX + idx * charSpacing,
+          y: mouseY,
+          targetX: mouseX + idx * charSpacing,
+          targetY: mouseY
+        });
+      });
+      
+      setTimeout(() => {
+        mouseFollowText.classList.add('visible');
+      }, 500);
+    }
+    
+    // 마우스 위치 추적 (모든 화면에서 작동)
+    function handleMouseMove(e) {
+      if (mouseFollowText) {
+        targetX = e.clientX;
+        targetY = e.clientY;
+      }
+    }
+    window.addEventListener('mousemove', handleMouseMove);
+    
+    // 텍스트 꼬리 애니메이션
+    function updateMouseFollowText() {
+      requestAnimationFrame(updateMouseFollowText);
+      
+      if (!mouseFollowText) {
+        return;
+      }
+      
+      // 꼬리가 마우스를 더 가깝게 추적
+      tailX += (targetX - tailX) * tailFollow;
+      tailY += (targetY - tailY) * tailFollow;
+      
+      // 각 글자가 순차적으로 따라오도록
+      trail.forEach((item, idx) => {
+        if (idx === 0) {
+          // 첫 번째 글자는 꼬리 위치를 따라감
+          item.targetX = tailX;
+          item.targetY = tailY;
+        } else {
+          // 나머지 글자는 이전 글자를 따라감 (간격 유지)
+          const prevItem = trail[idx - 1];
+          const dx = prevItem.x - item.x;
+          const dy = prevItem.y - item.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const desiredDist = charSpacing;
+          
+          if (dist > 0) {
+            item.targetX = prevItem.x - (dx / dist) * desiredDist;
+            item.targetY = prevItem.y - (dy / dist) * desiredDist;
+          } else {
+            item.targetX = prevItem.x;
+            item.targetY = prevItem.y;
+          }
+        }
+        
+        // 부드럽게 이동
+        const followSpeed = 0.2 + idx * 0.01;
+        item.x += (item.targetX - item.x) * followSpeed;
+        item.y += (item.targetY - item.y) * followSpeed;
+        
+        // 위치 적용
+        item.element.style.left = item.x + 'px';
+        item.element.style.top = item.y + 'px';
+      });
+    }
+    updateMouseFollowText();
     
     // Start
     initAnimatedGradient();
