@@ -455,10 +455,7 @@
   <!-- STAGE 4: BUBBLE -->
   <section id="bubble-stage" class="stage">
     <div id="three-canvas"></div>
-    <div class="stage-desc">
-      당신의 선택으로 완성된 알고리즘의 세계입니다.<br>
-      드래그하여 탐험하세요.
-    </div>
+   
     <div class="bubble-hint" id="bubble-hint-inside">스크롤 해서 버블 밖으로 나가기</div>
     <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 비누 터트리기</div>
     <button class="new-bubble-btn" id="new-bubble-btn" style="display: none;">또 다른 버블 만들기</button>
@@ -467,15 +464,87 @@
   <script>
     // --- DATA ---
     const TOPICS = [
-      { id: 'music', label: 'Music', icon: '🎵', sub: ['Techno', 'K-Pop', 'Jazz', 'Rock'] },
-      { id: 'art', label: 'Art', icon: '🎨', sub: ['Digital', 'Classic', 'NFT', 'Sketch'] },
-      { id: 'travel', label: 'Travel', icon: '✈️', sub: ['Asia', 'Europe', 'Beach', 'City'] },
-      { id: 'food', label: 'Food', icon: '🍔', sub: ['Korean', 'Italian', 'Dessert', 'Vegan'] },
-      { id: 'tech', label: 'Tech', icon: '💻', sub: ['AI', 'Coding', 'Gadgets', 'Future'] },
-      { id: 'fashion', label: 'Fashion', icon: '👗', sub: ['Street', 'Luxury', 'Vintage', 'Casual'] },
-      { id: 'pet', label: 'Pet', icon: '🐶', sub: ['Dog', 'Cat', 'Bird', 'Fish'] },
-      { id: 'game', label: 'Game', icon: '🎮', sub: ['FPS', 'RPG', 'Indie', 'Retro'] },
+      { id: 'food', label: 'FOOD', videos: [] },
+      { id: 'fashion', label: 'FASHION', videos: [] },
+      { id: 'travel', label: 'TRAVEL', videos: [] },
+      { id: 'beauty', label: 'BEAUTY', videos: [] },
+      { id: 'sport', label: 'SPORT', videos: [] },
+      { id: 'pet', label: 'PET', videos: [] },
     ];
+    
+    // 카테고리별 영상 파일 경로 생성 함수
+    function getCategoryVideos(categoryId, subCategory = null) {
+      const videos = [];
+      
+      switch(categoryId) {
+        case 'food':
+          if (subCategory === 'cook') {
+            for (let i = 1; i <= 6; i++) videos.push(`food/F C ${i}.mp4`);
+          } else if (subCategory === 'dessert') {
+            for (let i = 1; i <= 3; i++) videos.push(`food/F D ${i}.mp4`);
+          } else if (subCategory === 'mukbang') {
+            for (let i = 1; i <= 8; i++) videos.push(`food/F M ${i}.mp4`);
+          } else if (subCategory === 'restaurant') {
+            for (let i = 1; i <= 4; i++) videos.push(`food/F R ${i}.mp4`);
+          } else {
+            // 모든 food 영상
+            for (let i = 1; i <= 6; i++) videos.push(`food/F C ${i}.mp4`);
+            for (let i = 1; i <= 3; i++) videos.push(`food/F D ${i}.mp4`);
+            for (let i = 1; i <= 8; i++) videos.push(`food/F M ${i}.mp4`);
+            for (let i = 1; i <= 4; i++) videos.push(`food/F R ${i}.mp4`);
+          }
+          break;
+        case 'beauty':
+          if (subCategory === 'makeup') {
+            for (let i = 1; i <= 7; i++) videos.push(`beauty/B M ${i}.mp4`);
+          } else if (subCategory === 'skincare') {
+            for (let i = 1; i <= 5; i++) videos.push(`beauty/B S ${i}.mp4`);
+          } else {
+            // 모든 beauty 영상
+            for (let i = 1; i <= 7; i++) videos.push(`beauty/B M ${i}.mp4`);
+            for (let i = 1; i <= 5; i++) videos.push(`beauty/B S ${i}.mp4`);
+          }
+          break;
+        case 'fashion':
+          for (let i = 1; i <= 19; i++) {
+            if (i !== 5 && i !== 12) videos.push(`fashion/Fa ${i}.mp4`);
+          }
+          break;
+        case 'travel':
+          for (let i = 1; i <= 21; i++) videos.push(`travel/Tr ${i}.mp4`);
+          break;
+        case 'sport':
+          for (let i = 1; i <= 17; i++) videos.push(`sport/Sp ${i}.mp4`);
+          break;
+        case 'pet':
+          // pet 폴더가 비어있음
+          break;
+      }
+      
+      return videos;
+    }
+    
+    // 파일명에서 세부 카테고리 추출
+    function getSubCategoryFromFilename(filename, categoryId) {
+      if (categoryId === 'food') {
+        const match = filename.match(/F ([CDMR])/);
+        if (match) {
+          const code = match[1];
+          if (code === 'C') return 'cook';
+          if (code === 'D') return 'dessert';
+          if (code === 'M') return 'mukbang';
+          if (code === 'R') return 'restaurant';
+        }
+      } else if (categoryId === 'beauty') {
+        const match = filename.match(/B ([MS])/);
+        if (match) {
+          const code = match[1];
+          if (code === 'M') return 'makeup';
+          if (code === 'S') return 'skincare';
+        }
+      }
+      return null;
+    }
     // --- STATE ---
     const state = {
       selectedTopic: null,
@@ -542,35 +611,25 @@
       }
     }
     // --- STAGE 1: PILE LOGIC ---
-    // 샘플 비디오 URL 배열 (맨 처음 카드용)
-    const pileVideoUrls = [
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
-    ];
-    
     function initPile() {
       // Generate random cards
       for (let i = 0; i < 15; i++) {
         const topic = TOPICS[i % TOPICS.length];
         const card = document.createElement('div');
         card.className = 'pile-card';
-        const videoUrl = pileVideoUrls[i % pileVideoUrls.length];
+        
+        // 카테고리별 영상 가져오기
+        const categoryVideos = getCategoryVideos(topic.id);
+        if (categoryVideos.length === 0) continue; // pet은 비어있으므로 스킵
+        
+        const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
+        const videoUrl = randomVideo;
+        
         card.innerHTML = `
           <video autoplay loop muted playsinline>
             <source src="${videoUrl}" type="video/mp4">
           </video>
           <div class="card-content">
-            <div class="card-icon">${topic.icon}</div>
-            <div class="card-title" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">${topic.label}</div>
-            <div class="card-tag" style="color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.7);">#${topic.sub[0]}</div>
           </div>
         `;
         
@@ -591,6 +650,7 @@
         card.dataset.y = y;
         card.dataset.rot = rot;
         card.dataset.topic = JSON.stringify(topic);
+        card.dataset.videoUrl = videoUrl;
         // Click Event
         card.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -729,6 +789,7 @@
     // --- STAGE 2: TRANSITION TO GRID ---
     function selectCard(topic, clickedCard = null) {
       state.selectedTopic = topic;
+      state.selectedVideoUrl = clickedCard ? clickedCard.dataset.videoUrl : null;
       
       // 클릭한 카드가 있으면 화면 가운데로 이동
       if (clickedCard) {
@@ -797,42 +858,43 @@
         cells.push(cell);
       }
       
-      // Setup Main Card (Center-ish)
+      // Setup Main Card (Center-ish) - 클릭한 카드의 영상 사용
       const centerIdx = Math.floor(totalCells / 2);
-      setupCell(cells[centerIdx], topic, true);
+      const mainVideoUrl = state.selectedVideoUrl || getCategoryVideos(topic.id)[0];
+      setupCell(cells[centerIdx], topic, mainVideoUrl, true);
       cells[centerIdx].classList.add('main-card', 'active');
       
-      // Setup Side Cards (Immediate Context)
+      // Setup Side Cards (같은 카테고리의 영상 사용)
       setTimeout(() => {
         if (centerIdx - 1 >= 0) {
-          setupCell(cells[centerIdx - 1], { ...topic, label: topic.sub[0] }, false);
-          cells[centerIdx - 1].classList.add('side-card', 'active');
+          const categoryVideos = getCategoryVideos(topic.id);
+          if (categoryVideos.length > 0) {
+            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
+            setupCell(cells[centerIdx - 1], topic, randomVideo, false);
+            cells[centerIdx - 1].classList.add('side-card', 'active');
+          }
         }
       }, 300);
       setTimeout(() => {
         if (centerIdx + 1 < totalCells) {
-          setupCell(cells[centerIdx + 1], { ...topic, label: topic.sub[1] }, false);
-          cells[centerIdx + 1].classList.add('side-card', 'active');
+          const categoryVideos = getCategoryVideos(topic.id);
+          if (categoryVideos.length > 0) {
+            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
+            setupCell(cells[centerIdx + 1], topic, randomVideo, false);
+            cells[centerIdx + 1].classList.add('side-card', 'active');
+          }
         }
       }, 600);
     }
-    // 샘플 비디오 URL 배열 (그리드 카드용)
-    const gridVideoUrls = [
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
-    ];
     
-    function setupCell(element, data, isMain) {
-      const cellIndex = parseInt(element.dataset.index) || 0;
-      const videoUrl = gridVideoUrls[cellIndex % gridVideoUrls.length];
+    function setupCell(element, data, videoUrl, isMain) {
+      // videoUrl이 없으면 카테고리에서 랜덤 선택
+      if (!videoUrl) {
+        const categoryVideos = getCategoryVideos(data.id);
+        if (categoryVideos.length > 0) {
+          videoUrl = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
+        }
+      }
       
       element.innerHTML = `
         <div class="cell-content">
@@ -840,7 +902,6 @@
             <source src="${videoUrl}" type="video/mp4">
           </video>
           <div style="position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; pointer-events: auto;">
-            <div class="card-title" style="font-size: ${isMain ? '24px' : '16px'}; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${data.label}</div>
             <button class="like-btn" style="background: rgba(255,255,255,0.9); pointer-events: auto; z-index: 3;">
               <span>♥</span> Like
             </button>
@@ -890,9 +951,13 @@
       
       toReveal.forEach((cell, i) => {
         setTimeout(() => {
-          const subTopic = state.selectedTopic.sub[Math.floor(Math.random() * state.selectedTopic.sub.length)];
-          setupCell(cell, { label: subTopic }, false);
-          cell.classList.add('side-card', 'active');
+          // 같은 카테고리의 영상 사용
+          const categoryVideos = getCategoryVideos(state.selectedTopic.id);
+          if (categoryVideos.length > 0) {
+            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
+            setupCell(cell, state.selectedTopic, randomVideo, false);
+            cell.classList.add('side-card', 'active');
+          }
         }, i * 100);
       });
       // Check if full
@@ -1267,19 +1332,8 @@
         return texture;
       }
       
-      // 샘플 비디오 URL 배열 (실제 사용 시 원하는 비디오 URL로 교체)
-      const videoUrls = [
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
-        'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
-      ];
+      // 선택한 카테고리의 영상 사용
+      const videoUrls = state.selectedTopic ? getCategoryVideos(state.selectedTopic.id) : [];
       
       const cards = [];
       for (let i = 0; i < count; i++) {
@@ -1290,7 +1344,11 @@
         // 비디오 텍스처 적용 (모든 카드에 적용)
         let material;
         try {
-          const videoTexture = createVideoTexture(videoUrls[i % videoUrls.length]);
+          if (videoUrls.length === 0) {
+            throw new Error('No videos available');
+          }
+          const videoUrl = videoUrls[i % videoUrls.length];
+          const videoTexture = createVideoTexture(videoUrl);
           material = new THREE.MeshBasicMaterial({ 
             map: videoTexture,
             side: THREE.DoubleSide
