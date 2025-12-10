@@ -495,8 +495,9 @@
   <!-- STAGE 4: BUBBLE -->
   <section id="bubble-stage" class="stage">
     <div id="three-canvas"></div>
+   
     <div class="bubble-hint" id="bubble-hint-inside">스크롤 해서 버블 밖으로 나가기</div>
-    <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 비누 터트리기</div>
+    <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 내 알고리즘 버블 터뜨리기기</div>
     <button class="new-bubble-btn" id="new-bubble-btn" style="display: none;">또 다른 버블 만들기</button>
   </section>
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
@@ -624,6 +625,13 @@
     function goToPileStage() {
       // 시작 화면 숨기기
       startScreen.classList.add('hidden');
+      
+      // 마우스 따라오는 텍스트 숨기기
+      const mouseFollowText = document.getElementById('mouse-follow-text');
+      if (mouseFollowText) {
+        mouseFollowText.style.opacity = '0';
+        mouseFollowText.style.pointerEvents = 'none';
+      }
       
       // 로고를 좌측 상단으로 이동 (고정)
       mainLogo.classList.remove('start-screen');
