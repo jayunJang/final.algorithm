@@ -149,7 +149,6 @@
     }
     .grid-cell.active {
       opacity: 1;
-      transform: scale(1);
       background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
@@ -157,7 +156,6 @@
       z-index: 10;
       background: #222;
       color: #fff;
-      transform: scale(1.05);
       box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
     .grid-cell.side-card {
@@ -259,6 +257,56 @@
     @keyframes twinkle {
       0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
       50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    /* 나레이션 문구 스타일 */
+    .narration-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 30px 50px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
+      font-weight: 300;
+      font-variation-settings: "wght" 300;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      z-index: 10001;
+      max-width: 80%;
+      text-align: center;
+      line-height: 1.6;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+    }
+    .narration-text.visible {
+      opacity: 1;
+    }
+    /* 버블 밖으로 나갔을 때 문구 스타일 (버블 옆에 표시) */
+    .narration-text.outside-bubble {
+      top: 50%;
+      left: 75%;
+      transform: translate(-50%, -50%);
+      background: transparent;
+      color: #ffffff;
+      padding: 0;
+      border-radius: 0;
+      font-size: 24px;
+      font-weight: 500;
+      box-shadow: none;
+      text-shadow: 0 0 20px rgba(175, 255, 236, 0.8), 0 0 40px rgba(175, 255, 236, 0.4), 0 0 60px rgba(175, 255, 236, 0.2);
+      max-width: 400px;
+    }
+    /* 안내 문구 깜빡임 애니메이션 */
+    .bubble-hint.blink {
+      animation: blink 1s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
     .new-bubble-btn {
       position: absolute;
@@ -396,7 +444,7 @@
       padding: 0;
       cursor: pointer;
       position: relative;
-      top:140px;  
+      top:140px;
       text-decoration: none;
       letter-spacing: 0.1em;
       opacity: 0;
@@ -468,23 +516,18 @@
   <div class="mouse-follow-text" id="mouse-follow-text"></div>
   <!-- START SCREEN -->
   <div id="start-screen">
-   
     <button class="start-button" id="start-button">Start.</button>
   </div>
   <!-- Stage Description Text (하단 중앙) -->
   <div class="stage-desc-bottom" id="stage-desc-bottom"></div>
   <!-- STAGE 1: PILE -->
   <section id="pile-stage" class="stage">
-
-  
     <div class="pile-area" id="pile-area">
       <!-- Cards injected by JS -->
     </div>
   </section>
   <!-- STAGE 2 & 3: GRID -->
   <section id="grid-stage" class="stage">
-  
-   
     <div class="grid-container" id="grid-container">
       <!-- Grid cells injected by JS -->
     </div>
@@ -495,9 +538,9 @@
   <!-- STAGE 4: BUBBLE -->
   <section id="bubble-stage" class="stage">
     <div id="three-canvas"></div>
-   
+    <div class="narration-text" id="narration-text"></div>
     <div class="bubble-hint" id="bubble-hint-inside">스크롤 해서 버블 밖으로 나가기</div>
-    <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 내 알고리즘 버블 터뜨리기기</div>
+    <div class="bubble-hint" id="bubble-hint-outside" style="display: none;">5회 이상 클릭해서 내 알고리즘 버블 터뜨리기</div>
     <button class="new-bubble-btn" id="new-bubble-btn" style="display: none;">또 다른 버블 만들기</button>
   </section>
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
@@ -585,13 +628,51 @@
       }
       return null;
     }
+
     // --- STATE ---
     const state = {
       selectedTopic: null,
+      selectedVideoUrl: null,
       likes: 0,
       isGridFull: false,
-      bubbleInited: false
+      bubbleInited: false,
+      dominantVideoUrl: null,
+      floodTriggered: false
     };
+
+    const FLOOD_LIKES_THRESHOLD = 6; // ★ FIX: 6번 좋아요면 도배 + 버블 진입
+    
+    function getCurrentCardScale() {
+      if (state.likes >= 8) return 0.7;
+      if (state.likes >= 6) return 0.8;
+      if (state.likes >= 3) return 0.9;
+      return 1;
+    }
+    function applyGridCardScale(element) {
+      const scale = getCurrentCardScale();
+      element.style.transform = `scale(${scale})`;
+    }
+
+    function getVideoUrlForGrid() {
+      const videos = getCategoryVideos(state.selectedTopic.id);
+      if (!videos.length) return null;
+
+      if (!state.dominantVideoUrl) {
+        state.dominantVideoUrl = state.selectedVideoUrl || videos[Math.floor(Math.random() * videos.length)];
+      }
+
+      const l = state.likes;
+      let useDominantProb = 0;
+
+      if (l <= 2)       useDominantProb = 0.4;
+      else if (l <= 4)  useDominantProb = 0.7;
+      else if (l <= 7)  useDominantProb = 0.9;
+      else              useDominantProb = 1.0;
+
+      if (Math.random() < useDominantProb) return state.dominantVideoUrl;
+      return videos[Math.floor(Math.random() * videos.length)];
+    }
+
     // --- ELEMENTS ---
     const pileArea = document.getElementById('pile-area');
     const gridContainer = document.getElementById('grid-container');
@@ -608,13 +689,11 @@
     
     // --- START SCREEN LOGIC ---
     function initStartScreen() {
-      // Start 버튼 클릭 시 카드 선택 화면으로 전환
       startButton.addEventListener('click', (e) => {
         e.stopPropagation();
         goToPileStage();
       });
       
-      // 시작 화면 클릭 시에도 전환 (Start 버튼 제외)
       startScreen.addEventListener('click', (e) => {
         if (e.target !== startButton && !startButton.contains(e.target)) {
           goToPileStage();
@@ -623,51 +702,44 @@
     }
     
     function goToPileStage() {
-      // 시작 화면 숨기기
       startScreen.classList.add('hidden');
       
-      // 마우스 따라오는 텍스트 숨기기
       const mouseFollowText = document.getElementById('mouse-follow-text');
       if (mouseFollowText) {
         mouseFollowText.style.opacity = '0';
         mouseFollowText.style.pointerEvents = 'none';
       }
       
-      // 로고를 좌측 상단으로 이동 (고정)
       mainLogo.classList.remove('start-screen');
       mainLogo.classList.add('small');
       
-      // 설명 텍스트 표시
       setTimeout(() => {
         stageDescBottom.textContent = '마우스를 움직여 카드를 헤치고, 마음에 드는 카드 하나를 선택해보세요.';
         stageDescBottom.classList.add('visible');
       }, 400);
       
-      // 카드 선택 화면 활성화
       setTimeout(() => {
         stages.pile.classList.add('active');
         initPile();
       }, 400);
     }
     
-    // 스테이지별 설명 텍스트 업데이트 함수
     function updateStageDesc(text) {
       stageDescBottom.textContent = text;
       if (!stageDescBottom.classList.contains('visible')) {
         stageDescBottom.classList.add('visible');
       }
     }
+
     // --- STAGE 1: PILE LOGIC ---
     function initPile() {
-      // Generate random cards
       for (let i = 0; i < 15; i++) {
         const topic = TOPICS[i % TOPICS.length];
         const card = document.createElement('div');
         card.className = 'pile-card';
         
-        // 카테고리별 영상 가져오기
         const categoryVideos = getCategoryVideos(topic.id);
-        if (categoryVideos.length === 0) continue; // pet은 비어있으므로 스킵
+        if (categoryVideos.length === 0) continue;
         
         const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
         const videoUrl = randomVideo;
@@ -676,11 +748,9 @@
           <video autoplay loop muted playsinline preload="none">
             <source src="${videoUrl}" type="video/mp4">
           </video>
-          <div class="card-content">
-          </div>
+          <div class="card-content"></div>
         `;
         
-        // 비디오 재생 (지연 로딩)
         const video = card.querySelector('video');
         if (video) {
           video.addEventListener('loadeddata', () => {
@@ -689,7 +759,6 @@
           video.load();
         }
         
-        // Random position near center
         const angle = Math.random() * Math.PI * 2;
         const dist = Math.random() * 100;
         const x = Math.cos(angle) * dist;
@@ -701,51 +770,47 @@
         card.dataset.rot = rot;
         card.dataset.topic = JSON.stringify(topic);
         card.dataset.videoUrl = videoUrl;
-        // Click Event
+
         card.addEventListener('click', (e) => {
           e.stopPropagation();
           selectCard(topic, card);
         });
         pileArea.appendChild(card);
       }
-      // Physics Effect - 실제 물리 기반으로 부드럽게 흩어지기
+
       const cards = document.querySelectorAll('.pile-card');
       const cardPhysics = {};
-      let hasSpread = false; // 카드가 펼쳐졌는지 추적
+      let hasSpread = false;
       let initialSpreadTime = 0;
       
-      // 각 카드에 물리 속성 초기화
       cards.forEach((card, i) => {
         cardPhysics[i] = {
-          vx: 0, // x 속도
-          vy: 0, // y 속도
+          vx: 0,
+          vy: 0,
           baseX: parseFloat(card.dataset.x),
           baseY: parseFloat(card.dataset.y),
-          spreadX: 0, // 펼쳐진 위치 X
-          spreadY: 0, // 펼쳐진 위치 Y
+          spreadX: 0,
+          spreadY: 0,
           currentX: parseFloat(card.dataset.x),
           currentY: parseFloat(card.dataset.y),
           rot: parseFloat(card.dataset.rot)
         };
       });
       
-      // 마우스 위치 추적
       let mouseX = window.innerWidth / 2;
       let mouseY = window.innerHeight / 2;
       let isMouseInArea = false;
       
-      // 처음 호버 시 카드들을 타원형으로 펼치기 (위아래 간격 줄이기)
       pileArea.addEventListener('mouseenter', () => {
         isMouseInArea = true;
         if (!hasSpread) {
-          // 처음 호버 시 카드들을 타원형으로 펼치기
-          const spreadRadiusX = 200; // 가로 반경
-          const spreadRadiusY = 120; // 세로 반경 (위아래 간격 줄임)
+          const spreadRadiusX = 200;
+          const spreadRadiusY = 120;
           cards.forEach((card, i) => {
             const physics = cardPhysics[i];
             const angle = (i / cards.length) * Math.PI * 2;
             physics.spreadX = Math.cos(angle) * spreadRadiusX;
-            physics.spreadY = Math.sin(angle) * spreadRadiusY; // Y축 반경을 줄여서 위아래 간격 축소
+            physics.spreadY = Math.sin(angle) * spreadRadiusY;
             hasSpread = true;
             initialSpreadTime = Date.now();
           });
@@ -762,7 +827,6 @@
         mouseY = e.clientY;
       });
       
-      // 물리 시뮬레이션 루프
       function physicsUpdate() {
         if (!stages.pile.classList.contains('active')) {
           requestAnimationFrame(physicsUpdate);
@@ -770,12 +834,11 @@
         }
         
         const timeSinceSpread = Date.now() - initialSpreadTime;
-        const spreadDuration = 1000; // 펼쳐지는 애니메이션 시간
+        const spreadDuration = 1000;
         
         cards.forEach((card, i) => {
           const physics = cardPhysics[i];
           
-          // 처음 호버 시 펼쳐지는 애니메이션
           if (hasSpread && timeSinceSpread < spreadDuration) {
             const progress = Math.min(timeSinceSpread / spreadDuration, 1);
             const easeProgress = 1 - Math.pow(1 - progress, 3);
@@ -793,7 +856,6 @@
             physics.vy += (targetY - physics.currentY) * restoreStrength;
           }
           
-          // 마우스 반발력 (성능 최적화: getBoundingClientRect 호출 최소화)
           if (hasSpread && isMouseInArea) {
             const rect = card.getBoundingClientRect();
             const cardCx = rect.left + rect.width / 2;
@@ -801,7 +863,7 @@
             const dx = mouseX - cardCx;
             const dy = mouseY - cardCy;
             const distSq = dx*dx + dy*dy;
-            const maxDistSq = 16900; // 130^2
+            const maxDistSq = 16900;
             
             if (distSq < maxDistSq && distSq > 0) {
               const dist = Math.sqrt(distSq);
@@ -815,16 +877,13 @@
             }
           }
           
-          // 마찰력 적용 (속도 감소 - 더 빠르게 정지)
           const friction = 0.55;
           physics.vx *= friction;
           physics.vy *= friction;
           
-          // 위치 업데이트
           physics.currentX += physics.vx;
           physics.currentY += physics.vy;
           
-          // 변환 적용
           card.style.transform = `translate(${physics.currentX}px, ${physics.currentY}px) rotate(${physics.rot}deg)`;
         });
         
@@ -833,12 +892,11 @@
       
       physicsUpdate();
     }
-    // --- STAGE 2: TRANSITION TO GRID ---
+
     function selectCard(topic, clickedCard = null) {
       state.selectedTopic = topic;
       state.selectedVideoUrl = clickedCard ? clickedCard.dataset.videoUrl : null;
       
-      // 클릭한 카드가 있으면 화면 가운데로 이동
       if (clickedCard) {
         const card = clickedCard;
         const centerX = window.innerWidth / 2;
@@ -859,40 +917,34 @@
         card.style.transform = `translate(${baseX + targetX}px, ${baseY + targetY}px) rotate(0deg) scale(1.2)`;
         
         setTimeout(() => {
-          // Switch Stage
           stages.pile.classList.remove('active');
           stages.grid.classList.add('active');
-          updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+          updateStageDesc('마음에 드는 카드를 클릭해 화면을 꽉 채워보세요!');
           initGrid(topic);
         }, 600);
       } else {
-        // Switch Stage
         stages.pile.classList.remove('active');
         stages.grid.classList.add('active');
-        updateStageDesc('선택한 콘텐츠와 연관된 흐름이 이어집니다. 좋아요를 눌러 알고리즘을 확장하세요.');
+        updateStageDesc('마음에 드는 카드를 클릭해 화면을 꽉 채워보세요!');
         initGrid(topic);
       }
     }
-    // --- STAGE 3: GRID EXPANSION ---
+
     function initGrid(topic) {
       gridContainer.innerHTML = '';
       
-      // 3행으로 고정하고 카드 크기 조정
-      const rows = 3; // 3행 고정
+      const rows = 3;
       const gap = 8;
       const padding = 12;
       const availableWidth = window.innerWidth - padding * 2;
       const availableHeight = window.innerHeight - padding * 2;
       
-      // 3행에 맞춰 카드 높이 계산 (겹치지 않게)
       const cardHeight = (availableHeight - (gap * (rows - 1))) / rows;
-      const cardWidth = cardHeight * (9 / 16); // 릴스카드 비율 유지
+      const cardWidth = cardHeight * (9 / 16);
       
-      // 열 수 계산
       const cols = Math.max(3, Math.floor(availableWidth / (cardWidth + gap)));
       const totalCells = cols * rows;
       
-      // 그리드 컨테이너 스타일 조정
       gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
       gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
       
@@ -905,37 +957,31 @@
         cells.push(cell);
       }
       
-      // Setup Main Card (Center-ish) - 클릭한 카드의 영상 사용
       const centerIdx = Math.floor(totalCells / 2);
       const mainVideoUrl = state.selectedVideoUrl || getCategoryVideos(topic.id)[0];
       setupCell(cells[centerIdx], topic, mainVideoUrl, true);
       cells[centerIdx].classList.add('main-card', 'active');
+      applyGridCardScale(cells[centerIdx]);
       
-      // Setup Side Cards (같은 카테고리의 영상 사용)
       setTimeout(() => {
         if (centerIdx - 1 >= 0) {
-          const categoryVideos = getCategoryVideos(topic.id);
-          if (categoryVideos.length > 0) {
-            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
-            setupCell(cells[centerIdx - 1], topic, randomVideo, false);
-            cells[centerIdx - 1].classList.add('side-card', 'active');
-          }
+          const v = getVideoUrlForGrid() || getCategoryVideos(topic.id)[0];
+          setupCell(cells[centerIdx - 1], topic, v, false);
+          cells[centerIdx - 1].classList.add('side-card', 'active');
+          applyGridCardScale(cells[centerIdx - 1]);
         }
       }, 300);
       setTimeout(() => {
         if (centerIdx + 1 < totalCells) {
-          const categoryVideos = getCategoryVideos(topic.id);
-          if (categoryVideos.length > 0) {
-            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
-            setupCell(cells[centerIdx + 1], topic, randomVideo, false);
-            cells[centerIdx + 1].classList.add('side-card', 'active');
-          }
+          const v = getVideoUrlForGrid() || getCategoryVideos(topic.id)[0];
+          setupCell(cells[centerIdx + 1], topic, v, false);
+          cells[centerIdx + 1].classList.add('side-card', 'active');
+          applyGridCardScale(cells[centerIdx + 1]);
         }
       }, 600);
     }
     
     function setupCell(element, data, videoUrl, isMain) {
-      // videoUrl이 없으면 카테고리에서 랜덤 선택
       if (!videoUrl) {
         const categoryVideos = getCategoryVideos(data.id);
         if (categoryVideos.length > 0) {
@@ -956,7 +1002,6 @@
         </div>
       `;
       
-      // 비디오 재생 (지연 로딩)
       const video = element.querySelector('.card-video');
       if (video) {
         video.addEventListener('loadeddata', () => {
@@ -965,7 +1010,6 @@
         video.load();
       }
       
-      // 카드 전체 클릭 이벤트 (아무 곳이나 클릭해도 카드 수 증가)
       element.style.cursor = 'pointer';
       element.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -976,7 +1020,6 @@
         }
       });
       
-      // 버튼 클릭 이벤트 (중복 방지)
       const btn = element.querySelector('.like-btn');
       if (btn) {
         btn.addEventListener('click', (e) => {
@@ -989,321 +1032,80 @@
         });
       }
     }
+
+    function triggerFloodEffect() {
+      if (state.floodTriggered) return;
+      state.floodTriggered = true;
+
+      const allCells = Array.from(document.querySelectorAll('.grid-cell'));
+      const videos = getCategoryVideos(state.selectedTopic.id);
+      if (!videos.length) {
+        goToBubbleStage();
+        return;
+      }
+      if (!state.dominantVideoUrl) {
+        state.dominantVideoUrl = state.selectedVideoUrl || videos[Math.floor(Math.random() * videos.length)];
+      }
+
+      updateStageDesc('추천은 점점 단순해지고, 결국 하나의 콘텐츠만 남습니다.');
+
+      allCells.forEach((cell, idx) => {
+        setTimeout(() => {
+          setupCell(cell, state.selectedTopic, state.dominantVideoUrl, false);
+          cell.classList.add('side-card', 'active');
+          applyGridCardScale(cell);
+        }, idx * 20);
+      });
+
+      const totalDuration = allCells.length * 20 + 800;
+      setTimeout(() => {
+        state.isGridFull = true;
+        goToBubbleStage();
+      }, totalDuration);
+    }
+
     function expandGrid() {
       state.likes++;
-      
-      // Reveal more cells based on likes
-      const cells = Array.from(document.querySelectorAll('.grid-cell:not(.active)'));
-      
-      if (cells.length === 0) return;
-      // Reveal 3 random cells per like
-      const toReveal = cells.sort(() => 0.5 - Math.random()).slice(0, 3);
-      
-      toReveal.forEach((cell, i) => {
-        setTimeout(() => {
-          // 같은 카테고리의 영상 사용
-          const categoryVideos = getCategoryVideos(state.selectedTopic.id);
-          if (categoryVideos.length > 0) {
-            const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
-            setupCell(cell, state.selectedTopic, randomVideo, false);
-            cell.classList.add('side-card', 'active');
-          }
-        }, i * 100);
+
+      const scale = getCurrentCardScale();
+      document.querySelectorAll('.grid-cell.active').forEach(el => {
+        el.style.transform = `scale(${scale})`;
       });
-      // Check if full
-      const remaining = document.querySelectorAll('.grid-cell:not(.active)').length;
-      if (remaining <= 3 && !state.isGridFull) {
-        state.isGridFull = true;
-        // 자동으로 버블 스테이지로 전환
-        setTimeout(() => {
-          goToBubbleStage();
-        }, 500);
+
+      if (state.likes === 2) {
+        updateStageDesc('비슷한 영상이 점점 더 많이 추천되기 시작합니다.');
+      } else if (state.likes === 5) {
+        updateStageDesc('알고리즘은 점점 당신을 하나의 콘텐츠만 보도록 만듭니다.');
+      } else if (state.likes === 8) {
+        updateStageDesc('이제 거의 같은 세계만 반복해서 보게 됩니다.');
+      }
+
+      const cells = Array.from(document.querySelectorAll('.grid-cell:not(.active)'));
+      if (cells.length > 0) {
+        const toReveal = cells.sort(() => 0.5 - Math.random()).slice(0, 3);
+        
+        toReveal.forEach((cell, i) => {
+          setTimeout(() => {
+            const v = getVideoUrlForGrid() || getCategoryVideos(state.selectedTopic.id)[0];
+            setupCell(cell, state.selectedTopic, v, false);
+            cell.classList.add('side-card', 'active');
+            applyGridCardScale(cell);
+          }, i * 50);
+        });
+      }
+
+      if (state.likes >= FLOOD_LIKES_THRESHOLD && !state.isGridFull) {
+        triggerFloodEffect();
       }
     }
+
     let grid3DState = {
       is3DMode: false,
       scrollProgress: 0,
       isTransitioning: false
     };
     
-    function enableDragToBubble() {
-      let isDragging = false;
-      let startX = 0;
-      let startY = 0;
-      let dragDistance = 0;
-      let hasStarted3D = false;
-      
-      // 드래그 시작
-      gridContainer.addEventListener('mousedown', (e) => {
-        if (grid3DState.isTransitioning) return;
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        dragDistance = 0;
-        hasStarted3D = false;
-        gridContainer.style.cursor = 'grabbing';
-      });
-      
-      // 드래그 중
-      gridContainer.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        dragDistance = Math.sqrt(dx * dx + dy * dy);
-        
-        // 드래그가 시작되면 바로 3D 모드로 전환
-        if (dragDistance > 10 && !hasStarted3D) {
-          hasStarted3D = true;
-          grid3DState.is3DMode = true;
-          grid3DState.isTransitioning = true;
-          
-          // 그리드를 구 형태로 변형 (광각 효과)
-          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-          const radius = 8;
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          
-          cells.forEach((cell, i) => {
-            const rect = cell.getBoundingClientRect();
-            const cellX = rect.left + rect.width / 2;
-            const cellY = rect.top + rect.height / 2;
-            
-            // 구 형태로 변형
-            const phi = Math.acos(-1 + (2 * i) / cells.length);
-            const theta = Math.sqrt(cells.length * Math.PI) * phi;
-            
-            const x = Math.sin(phi) * Math.cos(theta) * radius;
-            const y = Math.sin(phi) * Math.sin(theta) * radius;
-            const z = Math.cos(phi) * radius;
-            
-            const translateX = (x / radius) * 200;
-            const translateY = (y / radius) * 200;
-            const translateZ = (z / radius) * 200;
-            
-            cell.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(0.9)`;
-            cell.style.transformStyle = 'preserve-3d';
-          });
-          
-          // 그리드 컨테이너에 perspective 적용
-          gridContainer.style.perspective = '2000px';
-          gridContainer.style.transformStyle = 'preserve-3d';
-          
-          setTimeout(() => {
-            grid3DState.isTransitioning = false;
-            dragHint.textContent = '계속 드래그하여 3D 공간으로 들어가세요';
-          }, 800);
-        }
-        
-        // 드래그 진행도에 따라 3D로 전환
-        if (hasStarted3D && !grid3DState.isTransitioning) {
-          const maxDragDistance = 300;
-          const progress = Math.min(dragDistance / maxDragDistance, 1);
-          grid3DState.scrollProgress = progress;
-          
-          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-          const radius = 8;
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          
-          cells.forEach((cell, i) => {
-            const phi = Math.acos(-1 + (2 * i) / cells.length);
-            const theta = Math.sqrt(cells.length * Math.PI) * phi;
-            
-            // 목표 구 좌표
-            const targetX = Math.sin(phi) * Math.cos(theta) * radius;
-            const targetY = Math.sin(phi) * Math.sin(theta) * radius;
-            const targetZ = Math.cos(phi) * radius;
-            
-            // 현재 2D 위치에서 3D 구 위치로 보간
-            const rect = cell.getBoundingClientRect();
-            const currentX = (rect.left + rect.width / 2 - centerX) / 200 * radius;
-            const currentY = (rect.top + rect.height / 2 - centerY) / 200 * radius;
-            
-            const finalX = currentX * (1 - progress) + targetX * progress;
-            const finalY = currentY * (1 - progress) + targetY * progress;
-            const finalZ = targetZ * progress;
-            
-            // 3D 변환 적용
-            const scale = 0.9 + progress * 0.1;
-            const translateX = finalX * 200 / radius;
-            const translateY = finalY * 200 / radius;
-            const translateZ = finalZ * 200 / radius;
-            
-            // 카드가 중심을 향하도록 회전 계산
-            const distance = Math.sqrt(finalX * finalX + finalY * finalY + finalZ * finalZ);
-            if (distance > 0.1 && progress > 0.2) {
-              const rotY = Math.atan2(finalX, finalZ) * 180 / Math.PI;
-              const rotX = -Math.asin(finalY / distance) * 180 / Math.PI;
-              
-              cell.style.transition = 'transform 0.1s ease-out';
-              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateY(${rotY * progress}deg) rotateX(${rotX * progress}deg)`;
-            } else {
-              cell.style.transition = 'transform 0.1s ease-out';
-              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale})`;
-            }
-          });
-          
-          // 그리드 컨테이너에도 perspective 효과 적용
-          const perspectiveAmount = 2000 + progress * 1000;
-          gridContainer.style.perspective = `${perspectiveAmount}px`;
-          
-          // 드래그가 충분히 진행되면 버블 스테이지로 전환
-          if (progress >= 0.85) {
-            goToBubbleStage();
-            isDragging = false;
-          }
-        }
-      });
-      
-      // 드래그 종료
-      window.addEventListener('mouseup', () => {
-        if (isDragging) {
-          isDragging = false;
-          gridContainer.style.cursor = 'grab';
-          
-          // 드래그가 충분하지 않으면 되돌리기
-          if (grid3DState.scrollProgress < 0.5 && hasStarted3D) {
-            const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-            cells.forEach((cell) => {
-              cell.style.transition = 'transform 0.5s ease-out';
-              cell.style.transform = '';
-            });
-            grid3DState.is3DMode = false;
-            grid3DState.scrollProgress = 0;
-            hasStarted3D = false;
-          }
-        }
-      });
-      
-      // 터치 이벤트 지원
-      gridContainer.addEventListener('touchstart', (e) => {
-        if (grid3DState.isTransitioning) return;
-        isDragging = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        dragDistance = 0;
-        hasStarted3D = false;
-      });
-      
-      gridContainer.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        
-        const dx = e.touches[0].clientX - startX;
-        const dy = e.touches[0].clientY - startY;
-        dragDistance = Math.sqrt(dx * dx + dy * dy);
-        
-        // 마우스 이벤트와 동일한 로직 적용
-        if (dragDistance > 10 && !hasStarted3D) {
-          hasStarted3D = true;
-          grid3DState.is3DMode = true;
-          grid3DState.isTransitioning = true;
-          
-          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-          const radius = 8;
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          
-          cells.forEach((cell, i) => {
-            const phi = Math.acos(-1 + (2 * i) / cells.length);
-            const theta = Math.sqrt(cells.length * Math.PI) * phi;
-            
-            const x = Math.sin(phi) * Math.cos(theta) * radius;
-            const y = Math.sin(phi) * Math.sin(theta) * radius;
-            const z = Math.cos(phi) * radius;
-            
-            const translateX = (x / radius) * 200;
-            const translateY = (y / radius) * 200;
-            const translateZ = (z / radius) * 200;
-            
-            cell.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
-            cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(0.9)`;
-            cell.style.transformStyle = 'preserve-3d';
-          });
-          
-          gridContainer.style.perspective = '2000px';
-          gridContainer.style.transformStyle = 'preserve-3d';
-          
-          setTimeout(() => {
-            grid3DState.isTransitioning = false;
-          }, 800);
-        }
-        
-        if (hasStarted3D && !grid3DState.isTransitioning) {
-          const maxDragDistance = 300;
-          const progress = Math.min(dragDistance / maxDragDistance, 1);
-          grid3DState.scrollProgress = progress;
-          
-          const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-          const radius = 8;
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          
-          cells.forEach((cell, i) => {
-            const phi = Math.acos(-1 + (2 * i) / cells.length);
-            const theta = Math.sqrt(cells.length * Math.PI) * phi;
-            
-            const targetX = Math.sin(phi) * Math.cos(theta) * radius;
-            const targetY = Math.sin(phi) * Math.sin(theta) * radius;
-            const targetZ = Math.cos(phi) * radius;
-            
-            const rect = cell.getBoundingClientRect();
-            const currentX = (rect.left + rect.width / 2 - centerX) / 200 * radius;
-            const currentY = (rect.top + rect.height / 2 - centerY) / 200 * radius;
-            
-            const finalX = currentX * (1 - progress) + targetX * progress;
-            const finalY = currentY * (1 - progress) + targetY * progress;
-            const finalZ = targetZ * progress;
-            
-            const scale = 0.9 + progress * 0.1;
-            const translateX = finalX * 200 / radius;
-            const translateY = finalY * 200 / radius;
-            const translateZ = finalZ * 200 / radius;
-            
-            const distance = Math.sqrt(finalX * finalX + finalY * finalY + finalZ * finalZ);
-            if (distance > 0.1 && progress > 0.2) {
-              const rotY = Math.atan2(finalX, finalZ) * 180 / Math.PI;
-              const rotX = -Math.asin(finalY / distance) * 180 / Math.PI;
-              
-              cell.style.transition = 'transform 0.1s ease-out';
-              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale}) rotateY(${rotY * progress}deg) rotateX(${rotX * progress}deg)`;
-            } else {
-              cell.style.transition = 'transform 0.1s ease-out';
-              cell.style.transform = `translate3d(${translateX}px, ${translateY}px, ${translateZ}px) scale(${scale})`;
-            }
-          });
-          
-          const perspectiveAmount = 2000 + progress * 1000;
-          gridContainer.style.perspective = `${perspectiveAmount}px`;
-          
-          if (progress >= 0.85) {
-            goToBubbleStage();
-            isDragging = false;
-          }
-        }
-      });
-      
-      window.addEventListener('touchend', () => {
-        if (isDragging) {
-          isDragging = false;
-          
-          if (grid3DState.scrollProgress < 0.5 && hasStarted3D) {
-            const cells = Array.from(document.querySelectorAll('.grid-cell.active'));
-            cells.forEach((cell) => {
-              cell.style.transition = 'transform 0.5s ease-out';
-              cell.style.transform = '';
-            });
-            grid3DState.is3DMode = false;
-            grid3DState.scrollProgress = 0;
-            hasStarted3D = false;
-          }
-        }
-      });
-    }
     function goToBubbleStage() {
-      // 그리드의 카드들을 수집하여 구로 변환
       const gridCards = Array.from(document.querySelectorAll('.grid-cell.active'));
       const cardData = gridCards.map((cell, index) => {
         const rect = cell.getBoundingClientRect();
@@ -1312,8 +1114,8 @@
         const title = cell.querySelector('.card-title')?.textContent || '';
         const isLiked = cell.querySelector('.like-btn')?.classList.contains('liked') || false;
         return {
-          x: (centerX - window.innerWidth / 2) / window.innerWidth * 20, // 3D 공간으로 스케일
-          y: -(centerY - window.innerHeight / 2) / window.innerHeight * 20, // Y축 반전
+          x: (centerX - window.innerWidth / 2) / window.innerWidth * 20,
+          y: -(centerY - window.innerHeight / 2) / window.innerHeight * 20,
           z: 0,
           title,
           isLiked,
@@ -1321,29 +1123,82 @@
         };
       });
       
-      // 그리드 페이드아웃
       stages.grid.style.transition = 'opacity 0.8s ease';
       stages.grid.style.opacity = '0';
       
       setTimeout(() => {
         stages.grid.classList.remove('active');
         stages.bubble.classList.add('active');
-        updateStageDesc('당신의 선택으로 완성된 알고리즘의 세계입니다. 드래그하여 탐험하세요.');
+        
+        const stageDescBottom = document.getElementById('stage-desc-bottom');
+        if (stageDescBottom) {
+          stageDescBottom.classList.remove('visible');
+        }
         
         if (!state.bubbleInited) {
           initThreeJS(cardData);
           state.bubbleInited = true;
         }
+        
+        startNarration();
       }, 400);
     }
-    // --- STAGE 4: THREE.JS BUBBLE ---
+
+    // --- BUBBLE / THREE.JS ---
     let bubbleState = {
       cameraDistance: 0.1,
       isOutside: false,
       clickCount: 0,
       lastClickTime: 0,
-      isExploding: false
+      isExploding: false,
+      narrationCompleted: false
     };
+    
+    function startNarration() {
+      const narrationText = document.getElementById('narration-text');
+      const hintInside = document.getElementById('bubble-hint-inside');
+      
+      if (!narrationText) return;
+      
+      const narrationLines = [
+        '당신은 다양한 컨텐츠를 본다고 생각하지만',
+        '알고리즘이 당신을 결국 편향적인 세상에 가둘 수 있습니다.'
+      ];
+      
+      let currentLineIndex = 0;
+      
+      function showNextLine() {
+        if (currentLineIndex >= narrationLines.length) {
+          narrationText.classList.remove('visible');
+          setTimeout(() => {
+            narrationText.style.display = 'none';
+            bubbleState.narrationCompleted = true;
+            
+            if (hintInside) {
+              hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
+              hintInside.classList.add('visible', 'blink');
+            }
+          }, 800);
+          return;
+        }
+        
+        narrationText.textContent = narrationLines[currentLineIndex];
+        narrationText.style.display = 'block';
+        narrationText.classList.add('visible');
+        
+        setTimeout(() => {
+          narrationText.classList.remove('visible');
+          setTimeout(() => {
+            currentLineIndex++;
+            showNextLine();
+          }, 800);
+        }, 2500);
+      }
+      
+      setTimeout(() => {
+        showNextLine();
+      }, 500);
+    }
     
     function initThreeJS(cardData = []) {
       const container = document.getElementById('three-canvas');
@@ -1354,18 +1209,16 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       container.appendChild(renderer.domElement);
       
-      // Cards on Sphere - 릴스카드 형태로 통일
       const group = new THREE.Group();
       scene.add(group);
       
-      // 버블 카드 수 (성능과 품질의 균형)
-      const count = Math.min(200, Math.max(80, cardData.length * 3));
+      // ★ FIX: 카드 개수 조정 (너무 많지 않게, 렉 줄이기)
+      const count = Math.min(90, Math.max(50, cardData.length * 2));
       const radius = 8;
-      const cardAspect = 9 / 16; // 릴스카드 비율
+      const cardAspect = 9 / 16;
       const cardHeight = 2.2;
       const cardWidth = cardHeight * cardAspect;
       
-      // 비디오 텍스처 생성 함수
       function createVideoTexture(videoUrl) {
         const video = document.createElement('video');
         video.src = videoUrl;
@@ -1382,8 +1235,11 @@
         return texture;
       }
       
-      // 선택한 카테고리의 영상 사용
       const videoUrls = state.selectedTopic ? getCategoryVideos(state.selectedTopic.id) : [];
+      
+      if (!state.dominantVideoUrl && videoUrls.length > 0) {
+        state.dominantVideoUrl = state.selectedVideoUrl || videoUrls[Math.floor(Math.random() * videoUrls.length)];
+      }
       
       const cards = [];
       for (let i = 0; i < count; i++) {
@@ -1391,31 +1247,39 @@
         const theta = Math.sqrt(count * Math.PI) * phi;
         const geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
         
-        // 비디오 텍스처 적용 (모든 카드에 적용)
-        let material;
+        let frontMaterial;
+        let materials;
+        
         try {
           if (videoUrls.length === 0) {
             throw new Error('No videos available');
           }
-          const videoUrl = videoUrls[i % videoUrls.length];
+          const videoUrl = state.dominantVideoUrl || videoUrls[0];
           const videoTexture = createVideoTexture(videoUrl);
-          material = new THREE.MeshBasicMaterial({ 
+          // ★ FIX: DoubleSide 로 설정해서 안/밖에서 모두 보이게
+          frontMaterial = new THREE.MeshBasicMaterial({ 
             map: videoTexture,
             side: THREE.DoubleSide
           });
         } catch (e) {
-          // 비디오 로드 실패 시 색상으로 대체
           console.log('Video load failed, using color:', e);
-          material = new THREE.MeshBasicMaterial({ 
+          frontMaterial = new THREE.MeshBasicMaterial({ 
             color: 0xffffff,
             side: THREE.DoubleSide
           });
-          material.color.setHSL(Math.random(), 0.7, 0.5);
+          frontMaterial.color.setHSL(Math.random(), 0.7, 0.5);
         }
         
-        const card = new THREE.Mesh(geometry, material);
+        // 뒤쪽 mint 색은 지금 구조상 잘 안 보이므로 일단 유지만 (디자인 코드 보존용)
+        const backMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0xAFFFEC,
+          side: THREE.BackSide
+        });
         
-        // 그리드에서 전환된 경우 초기 위치를 그리드 위치로 설정
+        materials = [frontMaterial, backMaterial];
+        
+        const card = new THREE.Mesh(geometry, materials);
+        
         if (cardData && cardData[i % cardData.length]) {
           const dataIndex = i % cardData.length;
           card.position.set(
@@ -1437,7 +1301,6 @@
         
         card.lookAt(0, 0, 0);
         
-        // Store original position and rotation
         card.userData.originalPosition = card.userData.targetPosition.clone();
         card.userData.originalRotation = card.rotation.clone();
         card.userData.velocity = new THREE.Vector3(0, 0, 0);
@@ -1446,19 +1309,12 @@
         cards.push(card);
       }
       
-      camera.position.z = 0.1; // Inside the sphere initially
+      camera.position.z = 0.1;
       
-      // 안내 문구 요소
       const hintInside = document.getElementById('bubble-hint-inside');
       const hintOutside = document.getElementById('bubble-hint-outside');
       const newBubbleBtn = document.getElementById('new-bubble-btn');
       
-      // 처음에는 안쪽 안내 문구 표시
-      setTimeout(() => {
-        if (hintInside) hintInside.classList.add('visible');
-      }, 1000);
-      
-      // Interaction
       let isDragging = false;
       let prevX = 0;
       let prevY = 0;
@@ -1482,7 +1338,6 @@
         prevY = e.clientY;
       });
       
-      // 스크롤아웃으로 구 바깥으로 나가기
       container.addEventListener('wheel', (e) => {
         e.preventDefault();
         
@@ -1493,33 +1348,51 @@
         if (bubbleState.cameraDistance > 12) {
           if (!bubbleState.isOutside) {
             bubbleState.isOutside = true;
-            bubbleState.clickCount = 0; // 바깥으로 나가면 클릭 카운터 리셋
-            // 안쪽 안내 문구 숨기고 바깥쪽 안내 문구 표시
-            if (hintInside) hintInside.classList.remove('visible');
-            if (hintOutside) {
-              hintOutside.style.display = 'block';
-              setTimeout(() => hintOutside.classList.add('visible'), 100);
+            bubbleState.clickCount = 0;
+            
+            if (hintInside) {
+              hintInside.classList.remove('visible', 'blink');
             }
+            
+            const narrationText = document.getElementById('narration-text');
+            if (narrationText) {
+              narrationText.textContent = '당신의 알고리즘 버블을 터뜨리세요!!! CLICK CLICK CLICK !';
+              narrationText.style.display = 'block';
+              narrationText.classList.add('visible', 'outside-bubble');
+            }
+            
+            if (hintOutside) {
+              hintOutside.style.display = 'none';
+              hintOutside.classList.remove('visible');
+            }
+            
             if (newBubbleBtn) {
               newBubbleBtn.style.display = 'block';
             }
           }
         } else {
           bubbleState.isOutside = false;
-          bubbleState.clickCount = 0; // 안으로 들어오면 클릭 카운터 리셋
-          // 바깥쪽 안내 문구 숨기고 안쪽 안내 문구 표시
-          if (hintOutside) {
-              hintOutside.classList.remove('visible');
-              setTimeout(() => hintOutside.style.display = 'none', 500);
-            }
-          if (hintInside) hintInside.classList.add('visible');
+          bubbleState.clickCount = 0;
+          
+          const narrationText = document.getElementById('narration-text');
+          if (narrationText) {
+            narrationText.classList.remove('visible', 'outside-bubble');
+            setTimeout(() => {
+              narrationText.style.display = 'none';
+            }, 500);
+          }
+          
+          if (hintInside && bubbleState.narrationCompleted) {
+            hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
+            hintInside.classList.add('visible', 'blink');
+          }
+          
           if (newBubbleBtn) {
             newBubbleBtn.style.display = 'none';
           }
         }
       });
       
-      // 바깥에서 구를 5번 이상 클릭하면 터지기
       container.addEventListener('click', (e) => {
         if (!bubbleState.isOutside || bubbleState.isExploding) return;
         
@@ -1531,7 +1404,6 @@
         }
         bubbleState.lastClickTime = now;
         
-        // 클릭 시 버블이 울렁거리는 모션
         shakeIntensity = 0.3;
         
         if (bubbleState.clickCount >= 5) {
@@ -1539,57 +1411,53 @@
         }
       });
       
-      // 또 다른 버블 만들기 버튼
       if (newBubbleBtn) {
         newBubbleBtn.addEventListener('click', () => {
-          // 첫 번째 스테이지로 돌아가기
           stages.bubble.classList.remove('active');
           stages.pile.classList.add('active');
           state.bubbleInited = false;
           state.isGridFull = false;
           state.likes = 0;
           state.selectedTopic = null;
+          state.selectedVideoUrl = null;
+          state.dominantVideoUrl = null;
+          state.floodTriggered = false;
           
-          // 페이지 새로고침 대신 초기화
           location.reload();
         });
       }
       
       function explodeBubble(cards) {
-        if (bubbleState.isExploding) return; // 이미 터지고 있으면 반복 방지
+        if (bubbleState.isExploding) return;
         bubbleState.isExploding = true;
         
-        // 카드들을 Y 좌표(높이)에 따라 정렬하여 윗 행부터 무너지게
         const sortedCards = cards.map((card, i) => ({
           card,
           y: card.position.y,
           index: i
-        })).sort((a, b) => b.y - a.y); // 위에서 아래로 정렬
+        })).sort((a, b) => b.y - a.y);
         
         sortedCards.forEach((item, delayIndex) => {
           const card = item.card;
-          const delay = delayIndex * 20; // 윗 행부터 순차적으로 시작
+          const delay = delayIndex * 20;
           
           setTimeout(() => {
-            // 중력 적용 - 아래로 떨어지도록
-            const gravity = -0.02; // 아래 방향
-            const horizontalSpread = (Math.random() - 0.5) * 0.1; // 수평 확산
-            const forwardSpread = (Math.random() - 0.5) * 0.1; // 전방 확산
+            const gravity = -0.02;
+            const horizontalSpread = (Math.random() - 0.5) * 0.1;
+            const forwardSpread = (Math.random() - 0.5) * 0.1;
             
             card.userData.velocity = new THREE.Vector3(
               horizontalSpread,
-              gravity, // 아래로 떨어짐
+              gravity,
               forwardSpread
             );
             
-            // 랜덤 회전 속도 추가
             card.userData.rotationSpeed = new THREE.Vector3(
               (Math.random() - 0.5) * 0.2,
               (Math.random() - 0.5) * 0.2,
               (Math.random() - 0.5) * 0.2
             );
             
-            // 카드가 떨어지는 속도 증가
             card.userData.gravity = gravity;
             card.userData.fallSpeed = 0;
           }, delay);
@@ -1600,23 +1468,20 @@
       function animate(currentTime) {
         requestAnimationFrame(animate);
         
-        // 프레임 드롭 방지 (60fps 제한)
         const deltaTime = currentTime - lastFrameTime;
         if (deltaTime < 16) return;
         lastFrameTime = currentTime;
         
-        // 카메라 위치 업데이트
         const targetZ = bubbleState.cameraDistance;
         camera.position.z += (targetZ - camera.position.z) * 0.1;
         
-        // 버블 울렁거리는 모션 (클릭 시)
         if (shakeIntensity > 0 && !bubbleState.isExploding) {
           const shakeX = (Math.random() - 0.5) * shakeIntensity;
           const shakeY = (Math.random() - 0.5) * shakeIntensity;
           const shakeZ = (Math.random() - 0.5) * shakeIntensity;
           
           group.position.set(shakeX, shakeY, shakeZ);
-          shakeIntensity *= 0.9; // 점점 감소
+          shakeIntensity *= 0.9;
           
           if (shakeIntensity < 0.01) {
             shakeIntensity = 0;
@@ -1624,7 +1489,6 @@
           }
         }
         
-        // 그리드에서 구로 전환 애니메이션
         cards.forEach(card => {
           if (card.userData.isTransitioning && !bubbleState.isExploding) {
             card.userData.transitionProgress += 0.02;
@@ -1634,21 +1498,16 @@
             }
             
             const t = card.userData.transitionProgress;
-            const easeT = t * t * (3 - 2 * t); // Smoothstep
+            const easeT = t * t * (3 - 2 * t);
             
             card.position.lerp(card.userData.targetPosition, easeT);
-            
-            // Look at center during transition
-            const lookAt = new THREE.Vector3(0, 0, 0);
-            card.lookAt(lookAt);
+            card.lookAt(0,0,0);
           }
         });
         
-        // 폭발 애니메이션 - 비눗방울 터지듯이 (투명도 변경 없이)
         if (bubbleState.isExploding) {
           cards.forEach(card => {
             if (card.userData.velocity) {
-              // 중력 적용 - 아래로 가속
               if (card.userData.gravity !== undefined) {
                 card.userData.fallSpeed = (card.userData.fallSpeed || 0) + card.userData.gravity;
                 card.userData.velocity.y = card.userData.fallSpeed;
@@ -1656,7 +1515,6 @@
               
               card.position.add(card.userData.velocity);
               
-              // 카드가 화면 밖으로 나가면 제거 (투명도 변경 없이)
               const distance = Math.sqrt(
                 card.position.x * card.position.x + 
                 card.position.y * card.position.y + 
@@ -1664,10 +1522,13 @@
               );
               
               if (distance > 50 || card.position.y < -30) {
-                // 카드를 씬에서 제거
                 group.remove(card);
                 card.geometry.dispose();
-                card.material.dispose();
+                if (Array.isArray(card.material)) {
+                  card.material.forEach(m => m.dispose());
+                } else {
+                  card.material.dispose();
+                }
               }
             }
             
@@ -1676,11 +1537,9 @@
               card.rotation.y += card.userData.rotationSpeed.y;
               card.rotation.z += card.userData.rotationSpeed.z;
               
-              // 회전 감속
               card.userData.rotationSpeed.multiplyScalar(0.98);
             }
             
-            // 수평 속도 감소
             if (card.userData.velocity) {
               card.userData.velocity.x *= 0.99;
               card.userData.velocity.z *= 0.99;
@@ -1692,29 +1551,28 @@
       }
       animate();
       
-      // Handle Resize
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
     }
+
     // --- Animated Gradient Background ---
     function initAnimatedGradient() {
-      // 네 가지 색상 조합
       const colors = [
-        { r: 255, g: 255, b: 255 }, // #FFFFFF
-        { r: 255, g: 0, b: 191 },   // #FF00BF
-        { r: 255, g: 0, b: 0 },     // #FF0000
-        { r: 255, g: 55, b: 0 }     // #FF3700
+        { r: 255, g: 255, b: 255 },
+        { r: 255, g: 0, b: 191 },
+        { r: 255, g: 0, b: 0 },
+        { r: 255, g: 55, b: 0 }
       ];
       
-      const opacity = 0.25; // 배경 투명도 25% (더 투명하게)
+      const opacity = 0.25;
       
       let time = 0;
       const speed = 0.005;
       let lastUpdate = 0;
-      const throttleMs = 16; // ~60fps로 제한
+      const throttleMs = 16;
       
       function lerpColor(color1, color2, t) {
         const easedT = t * t * (3 - 2 * t);
@@ -1734,34 +1592,28 @@
         lastUpdate = now;
         time += speed;
         
-        // 색상 인덱스 계산 (순환)
         const colorProgress = (time * colors.length) % colors.length;
         const colorIndex1 = Math.floor(colorProgress) % colors.length;
         const colorIndex2 = (colorIndex1 + 1) % colors.length;
         const colorIndex3 = (colorIndex1 + 2) % colors.length;
         const t = colorProgress - Math.floor(colorProgress);
         
-        // 중심 색상 (현재 -> 다음)
         const centerColor1 = colors[colorIndex1];
         const centerColor2 = colors[colorIndex2];
         const centerColor = lerpColor(centerColor1, centerColor2, t);
         
-        // 중간 색상 (다음 -> 그 다음)
         const midColor1 = colors[colorIndex2];
         const midColor2 = colors[colorIndex3];
         const midColor = lerpColor(midColor1, midColor2, t);
         
-        // 외곽 색상 (그 다음 -> 그 다음 다음)
         const outerColor1 = colors[colorIndex3];
         const outerColor2 = colors[(colorIndex3 + 1) % colors.length];
         const outerColor = lerpColor(outerColor1, outerColor2, t);
         
-        // 각도 변화 (원형으로 중심 위치 변경, 더 빠르게)
-        const angle = time * 1.2; // 각도 변화 속도 증가 (더 빠르게)
-        const centerX = 50 + Math.cos(angle) * 40; // 중심 X 위치 (10% ~ 90%, 더 넓게)
-        const centerY = 50 + Math.sin(angle * 1.5) * 40; // 중심 Y 위치 (비대칭 움직임, 더 넓게)
+        const angle = time * 1.2;
+        const centerX = 50 + Math.cos(angle) * 40;
+        const centerY = 50 + Math.sin(angle * 1.5) * 40;
         
-        // Radial 그라데이션 생성 (투명도 35% 적용, 각도 변화)
         const gradient = `radial-gradient(circle at ${centerX}% ${centerY}%, 
           rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, ${opacity}) 0%, 
           rgba(${midColor.r}, ${midColor.g}, ${midColor.b}, ${opacity}) 50%, 
@@ -1775,7 +1627,7 @@
       updateGradient();
     }
     
-    // --- Mouse Following Text (전체 화면에서 작동) ---
+    // --- Mouse Following Text ---
     const mouseFollowText = document.getElementById('mouse-follow-text');
     const followText = '당신의 관심사로 만들어지는 알고리즘 세계를 탐험하세요';
     let mouseX = window.innerWidth / 2;
@@ -1783,12 +1635,11 @@
     let targetX = mouseX;
     let targetY = mouseY;
     
-    // 꼬리 효과 변수
     let tailX = mouseX;
     let tailY = mouseY;
-    const tailFollow = 0.25; // 더 가깝게 따라오기
+    const tailFollow = 0.25;
     const trail = [];
-    const charSpacing = 32; // 글자 간 간격 (px)
+    const charSpacing = 32;
     
     if (mouseFollowText) {
       mouseFollowText.innerHTML = '';
@@ -1812,7 +1663,6 @@
       }, 500);
     }
     
-    // 마우스 위치 추적 (모든 화면에서 작동)
     function handleMouseMove(e) {
       if (mouseFollowText) {
         targetX = e.clientX;
@@ -1821,7 +1671,6 @@
     }
     window.addEventListener('mousemove', handleMouseMove);
     
-    // 텍스트 꼬리 애니메이션
     function updateMouseFollowText() {
       requestAnimationFrame(updateMouseFollowText);
       
@@ -1829,18 +1678,14 @@
         return;
       }
       
-      // 꼬리가 마우스를 더 가깝게 추적
       tailX += (targetX - tailX) * tailFollow;
       tailY += (targetY - tailY) * tailFollow;
       
-      // 각 글자가 순차적으로 따라오도록
       trail.forEach((item, idx) => {
         if (idx === 0) {
-          // 첫 번째 글자는 꼬리 위치를 따라감
           item.targetX = tailX;
           item.targetY = tailY;
         } else {
-          // 나머지 글자는 이전 글자를 따라감 (간격 유지)
           const prevItem = trail[idx - 1];
           const dx = prevItem.x - item.x;
           const dy = prevItem.y - item.y;
@@ -1856,19 +1701,16 @@
           }
         }
         
-        // 부드럽게 이동
         const followSpeed = 0.2 + idx * 0.01;
         item.x += (item.targetX - item.x) * followSpeed;
         item.y += (item.targetY - item.y) * followSpeed;
         
-        // 위치 적용
         item.element.style.left = item.x + 'px';
         item.element.style.top = item.y + 'px';
       });
     }
     updateMouseFollowText();
     
-    // Start
     initAnimatedGradient();
     initStartScreen();
   </script>
