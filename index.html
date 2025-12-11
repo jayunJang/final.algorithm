@@ -221,7 +221,7 @@
     .drag-hint.visible {
       opacity: 1;
     }
-    /* --- Stage 4: Bubble --- */
+    /* --- Stage 4: BUBBLE --- */
     #bubble-stage {
       background: transparent;
     }
@@ -1146,12 +1146,13 @@
 
     // --- BUBBLE / THREE.JS ---
     let bubbleState = {
-      cameraDistance: 0.1,
+      cameraDistance: 6,
       isOutside: false,
       clickCount: 0,
       lastClickTime: 0,
       isExploding: false,
-      narrationCompleted: false
+      narrationCompleted: false,
+      outsidePromptLocked: false
     };
     
     function startNarration() {
@@ -1200,6 +1201,7 @@
       }, 500);
     }
     
+    // ★★★ 여기부터: 비디오 텍스처 / 재질 부분 수정 ★★★
     function initThreeJS(cardData = []) {
       const container = document.getElementById('three-canvas');
       const scene = new THREE.Scene();
@@ -1212,26 +1214,28 @@
       const group = new THREE.Group();
       scene.add(group);
       
-      // ★ FIX: 카드 개수 조정 (너무 많지 않게, 렉 줄이기)
-      const count = Math.min(90, Math.max(50, cardData.length * 2));
+      // 카드 개수
+      const count = Math.min(90, Math.max(50, cardData.length * 2 || 50));
       const radius = 8;
       const cardAspect = 9 / 16;
       const cardHeight = 2.2;
       const cardWidth = cardHeight * cardAspect;
-      
-      function createVideoTexture(videoUrl) {
+
+      // 비디오 텍스처 생성 함수
+      function createVideoTexture(url) {
         const video = document.createElement('video');
-        video.src = videoUrl;
+        video.src = url;
         video.crossOrigin = 'anonymous';
         video.loop = true;
         video.muted = true;
         video.playsInline = true;
-        video.preload = 'none';
+        video.preload = 'auto';
         video.play().catch(() => {});
         
         const texture = new THREE.VideoTexture(video);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
+        texture.needsUpdate = true;
         return texture;
       }
       
@@ -1246,41 +1250,35 @@
         const phi = Math.acos(-1 + (2 * i) / count);
         const theta = Math.sqrt(count * Math.PI) * phi;
         const geometry = new THREE.PlaneGeometry(cardWidth, cardHeight);
-        
-        let frontMaterial;
-        let materials;
-        
-        try {
-          if (videoUrls.length === 0) {
-            throw new Error('No videos available');
-          }
+
+        let material;
+
+        if (videoUrls.length > 0) {
           const videoUrl = state.dominantVideoUrl || videoUrls[0];
-          const videoTexture = createVideoTexture(videoUrl);
-          // ★ FIX: DoubleSide 로 설정해서 안/밖에서 모두 보이게
-          frontMaterial = new THREE.MeshBasicMaterial({ 
-            map: videoTexture,
+          try {
+            const videoTexture = createVideoTexture(videoUrl);
+            material = new THREE.MeshBasicMaterial({
+              map: videoTexture,
+              side: THREE.DoubleSide
+            });
+          } catch (e) {
+            // 비디오 실패 시 민트 컬러 카드
+            material = new THREE.MeshBasicMaterial({
+              color: 0xAFFFEC,
+              side: THREE.DoubleSide
+            });
+          }
+        } else {
+          // 해당 카테고리 비디오가 아예 없을 때
+          material = new THREE.MeshBasicMaterial({
+            color: 0xAFFFEC,
             side: THREE.DoubleSide
           });
-        } catch (e) {
-          console.log('Video load failed, using color:', e);
-          frontMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff,
-            side: THREE.DoubleSide
-          });
-          frontMaterial.color.setHSL(Math.random(), 0.7, 0.5);
         }
+
+        const card = new THREE.Mesh(geometry, material);
         
-        // 뒤쪽 mint 색은 지금 구조상 잘 안 보이므로 일단 유지만 (디자인 코드 보존용)
-        const backMaterial = new THREE.MeshBasicMaterial({ 
-          color: 0xAFFFEC,
-          side: THREE.BackSide
-        });
-        
-        materials = [frontMaterial, backMaterial];
-        
-        const card = new THREE.Mesh(geometry, materials);
-        
-        if (cardData && cardData[i % cardData.length]) {
+        if (cardData && cardData.length > 0 && cardData[i % cardData.length]) {
           const dataIndex = i % cardData.length;
           card.position.set(
             cardData[dataIndex].x,
@@ -1309,11 +1307,43 @@
         cards.push(card);
       }
       
-      camera.position.z = 0.1;
+      camera.position.z = bubbleState.cameraDistance;
+      camera.lookAt(0, 0, 0);
       
       const hintInside = document.getElementById('bubble-hint-inside');
       const hintOutside = document.getElementById('bubble-hint-outside');
       const newBubbleBtn = document.getElementById('new-bubble-btn');
+
+      function showOutsideNarration() {
+        bubbleState.outsidePromptLocked = true;
+        if (hintInside) {
+          hintInside.classList.remove('visible', 'blink');
+        }
+        const narrationText = document.getElementById('narration-text');
+        if (narrationText) {
+          narrationText.textContent = '당신의 알고리즘 버블을 터뜨리세요!!! CLICK CLICK CLICK !';
+          narrationText.style.display = 'block';
+          narrationText.classList.add('visible', 'outside-bubble');
+        }
+        if (hintOutside) {
+          hintOutside.style.display = 'none';
+          hintOutside.classList.remove('visible');
+        }
+        if (newBubbleBtn) {
+          newBubbleBtn.style.display = 'block';
+        }
+      }
+
+      function hideOutsideNarration() {
+        const narrationText = document.getElementById('narration-text');
+        if (narrationText) {
+          narrationText.classList.remove('visible', 'outside-bubble');
+          setTimeout(() => {
+            narrationText.style.display = 'none';
+          }, 500);
+        }
+        bubbleState.outsidePromptLocked = false;
+      }
       
       let isDragging = false;
       let prevX = 0;
@@ -1350,45 +1380,23 @@
             bubbleState.isOutside = true;
             bubbleState.clickCount = 0;
             
-            if (hintInside) {
-              hintInside.classList.remove('visible', 'blink');
-            }
-            
-            const narrationText = document.getElementById('narration-text');
-            if (narrationText) {
-              narrationText.textContent = '당신의 알고리즘 버블을 터뜨리세요!!! CLICK CLICK CLICK !';
-              narrationText.style.display = 'block';
-              narrationText.classList.add('visible', 'outside-bubble');
-            }
-            
-            if (hintOutside) {
-              hintOutside.style.display = 'none';
-              hintOutside.classList.remove('visible');
-            }
-            
-            if (newBubbleBtn) {
-              newBubbleBtn.style.display = 'block';
-            }
+            showOutsideNarration();
           }
         } else {
           bubbleState.isOutside = false;
           bubbleState.clickCount = 0;
           
-          const narrationText = document.getElementById('narration-text');
-          if (narrationText) {
-            narrationText.classList.remove('visible', 'outside-bubble');
-            setTimeout(() => {
-              narrationText.style.display = 'none';
-            }, 500);
-          }
-          
-          if (hintInside && bubbleState.narrationCompleted) {
-            hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
-            hintInside.classList.add('visible', 'blink');
-          }
-          
-          if (newBubbleBtn) {
-            newBubbleBtn.style.display = 'none';
+          if (!bubbleState.outsidePromptLocked || bubbleState.isExploding) {
+            hideOutsideNarration();
+            
+            if (hintInside && bubbleState.narrationCompleted) {
+              hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
+              hintInside.classList.add('visible', 'blink');
+            }
+            
+            if (newBubbleBtn) {
+              newBubbleBtn.style.display = 'none';
+            }
           }
         }
       });
@@ -1407,6 +1415,7 @@
         shakeIntensity = 0.3;
         
         if (bubbleState.clickCount >= 5) {
+          hideOutsideNarration();
           explodeBubble(cards);
         }
       });
@@ -1479,10 +1488,8 @@
           const shakeX = (Math.random() - 0.5) * shakeIntensity;
           const shakeY = (Math.random() - 0.5) * shakeIntensity;
           const shakeZ = (Math.random() - 0.5) * shakeIntensity;
-          
           group.position.set(shakeX, shakeY, shakeZ);
           shakeIntensity *= 0.9;
-          
           if (shakeIntensity < 0.01) {
             shakeIntensity = 0;
             group.position.set(0, 0, 0);
@@ -1496,10 +1503,8 @@
               card.userData.transitionProgress = 1;
               card.userData.isTransitioning = false;
             }
-            
             const t = card.userData.transitionProgress;
             const easeT = t * t * (3 - 2 * t);
-            
             card.position.lerp(card.userData.targetPosition, easeT);
             card.lookAt(0,0,0);
           }
@@ -1512,34 +1517,28 @@
                 card.userData.fallSpeed = (card.userData.fallSpeed || 0) + card.userData.gravity;
                 card.userData.velocity.y = card.userData.fallSpeed;
               }
-              
               card.position.add(card.userData.velocity);
-              
               const distance = Math.sqrt(
                 card.position.x * card.position.x + 
                 card.position.y * card.position.y + 
                 card.position.z * card.position.z
               );
-              
               if (distance > 50 || card.position.y < -30) {
                 group.remove(card);
                 card.geometry.dispose();
                 if (Array.isArray(card.material)) {
                   card.material.forEach(m => m.dispose());
-                } else {
+                } else if (card.material) {
                   card.material.dispose();
                 }
               }
             }
-            
             if (card.userData.rotationSpeed) {
               card.rotation.x += card.userData.rotationSpeed.x;
               card.rotation.y += card.userData.rotationSpeed.y;
               card.rotation.z += card.userData.rotationSpeed.z;
-              
               card.userData.rotationSpeed.multiplyScalar(0.98);
             }
-            
             if (card.userData.velocity) {
               card.userData.velocity.x *= 0.99;
               card.userData.velocity.z *= 0.99;
@@ -1557,6 +1556,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       });
     }
+    // ★★★ 여기까지 비디오 텍스처/재질 수정 ★★★
 
     // --- Animated Gradient Background ---
     function initAnimatedGradient() {
