@@ -343,43 +343,6 @@
       transform: translateX(-50%) scale(1.05);
       box-shadow: 0 4px 20px rgba(255, 127, 152, 0.5);
     }
-    /* --- Mouse Following Text --- */
-    .mouse-follow-text {
-      position: fixed;
-      pointer-events: none;
-      z-index: 10001;
-      display: flex;
-      gap: 8px;
-      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
-      font-weight: 500;
-      font-variation-settings: "wght" 500;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      will-change: transform;
-    }
-    .mouse-follow-text.visible {
-      opacity: 1;
-    }
-    .mouse-follow-text .char {
-      position: absolute;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background-color: #AFFFEC;
-      color: #1a1a1a;
-      font-size: 14px;
-      line-height: 1;
-      transition: transform 0.1s ease-out;
-      transform: translate(-50%, -50%);
-    }
-    .mouse-follow-text .char.space {
-      width: 12px;
-      background-color: transparent;
-    }
     /* --- Logo --- */
     .logo {
       position: fixed;
@@ -580,8 +543,6 @@
     <div class="about-tooltip" id="about-tooltip"></div>
   </div>
    <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
-  <!-- Mouse Following Text (전체 화면에서 작동) -->
-  <div class="mouse-follow-text" id="mouse-follow-text"></div>
   <!-- START SCREEN -->
   <div id="start-screen">
     <button class="start-button" id="start-button">Start.</button>
@@ -782,12 +743,6 @@
     
     function goToPileStage() {
       startScreen.classList.add('hidden');
-      
-      const mouseFollowText = document.getElementById('mouse-follow-text');
-      if (mouseFollowText) {
-        mouseFollowText.style.opacity = '0';
-        mouseFollowText.style.pointerEvents = 'none';
-      }
       
       mainLogo.classList.remove('start-screen');
       mainLogo.classList.add('small');
@@ -1709,98 +1664,24 @@
       updateGradient();
     }
     
-    // --- Mouse Following Text ---
-    const mouseFollowText = document.getElementById('mouse-follow-text');
     const customCursor = document.getElementById('custom-cursor');
-    const followText = '당신의 관심사로 만들어지는 알고리즘 세계를 탐험하세요';
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
-    let targetX = mouseX;
-    let targetY = mouseY;
-    
-    let tailX = mouseX;
-    let tailY = mouseY;
-    const tailFollow = 0.25;
-    const trail = [];
-    const charSpacing = 32;
-    
-    if (mouseFollowText) {
-      mouseFollowText.innerHTML = '';
-      followText.split('').forEach((char, idx) => {
-        const charSpan = document.createElement('span');
-        charSpan.className = 'char' + (char === ' ' ? ' space' : '');
-        charSpan.textContent = char === ' ' ? '' : char;
-        charSpan.style.color = '#1a1a1a';
-        mouseFollowText.appendChild(charSpan);
-        trail.push({
-          element: charSpan,
-          x: mouseX + idx * charSpacing,
-          y: mouseY,
-          targetX: mouseX + idx * charSpacing,
-          targetY: mouseY
-        });
-      });
-      
-      setTimeout(() => {
-        mouseFollowText.classList.add('visible');
-      }, 500);
-    }
-    
+
     function handleMouseMove(e) {
-      if (mouseFollowText) {
-        targetX = e.clientX;
-        targetY = e.clientY;
-      }
+      mouseX = e.clientX;
+      mouseY = e.clientY;
       if (customCursor) {
-        customCursor.style.left = e.clientX + 'px';
-        customCursor.style.top = e.clientY + 'px';
+        customCursor.style.left = mouseX + 'px';
+        customCursor.style.top = mouseY + 'px';
       }
     }
     window.addEventListener('mousemove', handleMouseMove);
-    
-    function updateMouseFollowText() {
-      requestAnimationFrame(updateMouseFollowText);
-      
-      if (!mouseFollowText) {
-        return;
-      }
-      
-      tailX += (targetX - tailX) * tailFollow;
-      tailY += (targetY - tailY) * tailFollow;
-      
-      trail.forEach((item, idx) => {
-        if (idx === 0) {
-          item.targetX = tailX;
-          item.targetY = tailY;
-        } else {
-          const prevItem = trail[idx - 1];
-          const dx = prevItem.x - item.x;
-          const dy = prevItem.y - item.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const desiredDist = charSpacing;
-          
-          if (dist > 0) {
-            item.targetX = prevItem.x - (dx / dist) * desiredDist;
-            item.targetY = prevItem.y - (dy / dist) * desiredDist;
-          } else {
-            item.targetX = prevItem.x;
-            item.targetY = prevItem.y;
-          }
-        }
-        
-        const followSpeed = 0.2 + idx * 0.01;
-        item.x += (item.targetX - item.x) * followSpeed;
-        item.y += (item.targetY - item.y) * followSpeed;
-        
-        item.element.style.left = item.x + 'px';
-        item.element.style.top = item.y + 'px';
-      });
-    }
+
     if (customCursor) {
       customCursor.style.left = mouseX + 'px';
       customCursor.style.top = mouseY + 'px';
     }
-    updateMouseFollowText();
     
     initAnimatedGradient();
     initStartScreen();
