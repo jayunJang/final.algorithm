@@ -16,6 +16,7 @@
       overflow: hidden;
       font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", "Noto Sans", sans-serif;
       color: #f5f5f5;
+      cursor: none;
     }
     body {
       position: relative;
@@ -508,9 +509,66 @@
     .stage-desc-bottom.visible {
       opacity: 1;
     }
+
+    .about-box {
+      position: fixed;
+      top: 24px;
+      right: 36px;
+      z-index: 10010;
+      font-size: 14px;
+      color: #AFFFEC;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 6px;
+      cursor: pointer;
+      padding-bottom: 6px;
+    }
+    .about-box .about-tooltip {
+      position: absolute;
+      top: 120%;
+      right: 0;
+      width: 320px;
+      background: rgba(255, 255, 255, 0.6);
+      color: #111;
+      font-size: 12pt;
+      line-height: 1.6;
+      padding: 14px 16px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      pointer-events: none;
+      text-align: left;
+    }
+    .about-box:hover .about-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+    .custom-cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 26px;
+      height: 26px;
+      border: 2px solid #AFFFEC;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: 10002;
+      transition: transform 0.1s ease-out;
+      backdrop-filter: blur(0);
+    }
   </style>
 </head>
 <body>
+  <div class="custom-cursor" id="custom-cursor"></div>
+  <div class="about-box" id="about-box">
+    ABOUT.
+    <div class="about-tooltip" id="about-tooltip"></div>
+  </div>
    <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
   <!-- Mouse Following Text (전체 화면에서 작동) -->
   <div class="mouse-follow-text" id="mouse-follow-text"></div>
@@ -686,6 +744,17 @@
       grid: document.getElementById('grid-stage'),
       bubble: document.getElementById('bubble-stage')
     };
+    const aboutTooltip = document.getElementById('about-tooltip');
+    const ABOUT_TEXTS = {
+      start: '우리는 매일 무한한 콘텐츠를 보고 있다고 생각하지만, 사실 알고리즘은 우리가 좋아할 컨텐츠들만을 더 정확하게, 더 좁게 추천합니다.<br/><br/>그 과정에서 취향은 강화되고, 점점 더 한 방향으로 모입니다.',
+      grid: 'Algorithmic Bubbles는 이 보이지 않는 ‘알고리즘의 세계’를 인터랙션으로 재구성한 실험입니다.<br/><br/>카드 한 장을 고르는 작은 행동이 어떻게 비슷한 콘텐츠를 끝없이 불러오고, 결국 단일한 버블로 수렴하는지를 직접 경험합니다.',
+      bubble: '그리고 마지막에는 그 버블을 스스로 깨뜨리며, 알고리즘이 만든 세계에서 벗어날 가능성을 상상하게 합니다.'
+    };
+    function updateAboutText(stageKey) {
+      if (!aboutTooltip) return;
+      const text = ABOUT_TEXTS[stageKey] || '';
+      aboutTooltip.innerHTML = text;
+    }
     
     // --- START SCREEN LOGIC ---
     function initStartScreen() {
@@ -919,12 +988,14 @@
         setTimeout(() => {
           stages.pile.classList.remove('active');
           stages.grid.classList.add('active');
+          updateAboutText('grid');
           updateStageDesc('마음에 드는 카드를 클릭해 화면을 꽉 채워보세요!');
           initGrid(topic);
         }, 600);
       } else {
         stages.pile.classList.remove('active');
         stages.grid.classList.add('active');
+      updateAboutText('grid');
         updateStageDesc('마음에 드는 카드를 클릭해 화면을 꽉 채워보세요!');
         initGrid(topic);
       }
@@ -1129,6 +1200,7 @@
       setTimeout(() => {
         stages.grid.classList.remove('active');
         stages.bubble.classList.add('active');
+        updateAboutText('bubble');
         
         const stageDescBottom = document.getElementById('stage-desc-bottom');
         if (stageDescBottom) {
@@ -1713,6 +1785,7 @@
     
     initAnimatedGradient();
     initStartScreen();
+    updateAboutText('start');
   </script>
 </body>
 </html>
