@@ -18,6 +18,16 @@
       color: #f5f5f5;
       cursor: none;
     }
+    button,
+    a,
+    .pile-card,
+    .grid-cell,
+    .like-btn,
+    .new-bubble-btn,
+    .start-button,
+    .about-box {
+      cursor: none !important;
+    }
     body {
       position: relative;
       background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25), rgba(255, 0, 191, 0.25));
@@ -532,11 +542,11 @@
       width: 320px;
       background: rgba(255, 255, 255, 0.6);
       color: #111;
-      font-size: 12pt;
+      font-size: 10pt;
       line-height: 1.6;
       padding: 14px 16px;
       border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.055);
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -1234,8 +1244,8 @@
       if (!narrationText) return;
       
       const narrationLines = [
-        '당신은 다양한 컨텐츠를 본다고 생각하지만',
-        '알고리즘이 당신을 결국 편향적인 세상에 가둘 수 있습니다.'
+        '당신은 다양한 컨텐츠를 보고있다고 생각하지만',
+        '알고리즘이 결국 세상을 넓은 시각으로 바라보는 것을 방해할 수 있습니다.'
       ];
       
       let currentLineIndex = 0;
@@ -1701,6 +1711,7 @@
     
     // --- Mouse Following Text ---
     const mouseFollowText = document.getElementById('mouse-follow-text');
+    const customCursor = document.getElementById('custom-cursor');
     const followText = '당신의 관심사로 만들어지는 알고리즘 세계를 탐험하세요';
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
@@ -1739,6 +1750,10 @@
       if (mouseFollowText) {
         targetX = e.clientX;
         targetY = e.clientY;
+      }
+      if (customCursor) {
+        customCursor.style.left = e.clientX + 'px';
+        customCursor.style.top = e.clientY + 'px';
       }
     }
     window.addEventListener('mousemove', handleMouseMove);
@@ -1780,6 +1795,10 @@
         item.element.style.left = item.x + 'px';
         item.element.style.top = item.y + 'px';
       });
+    }
+    if (customCursor) {
+      customCursor.style.left = mouseX + 'px';
+      customCursor.style.top = mouseY + 'px';
     }
     updateMouseFollowText();
     
