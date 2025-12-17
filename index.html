@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <title>Algorithmic Bubble – Card Flow</title>
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    html, body {
+
+    html,
+    body {
       width: 100%;
       height: 100%;
       overflow: hidden;
@@ -18,6 +22,7 @@
       color: #f5f5f5;
       cursor: none;
     }
+
     button,
     a,
     .pile-card,
@@ -28,10 +33,12 @@
     .about-box {
       cursor: none !important;
     }
+
     body {
       position: relative;
       background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25), rgba(255, 0, 191, 0.25));
     }
+
     /* --- Common Stage Styles --- */
     .stage {
       position: absolute;
@@ -44,10 +51,12 @@
       align-items: center;
       justify-content: center;
     }
+
     .stage.active {
       opacity: 1;
       pointer-events: auto;
     }
+
     .stage-desc {
       position: absolute;
       top: 50px;
@@ -61,10 +70,12 @@
       line-height: 1.5;
       z-index: 10;
     }
+
     /* --- Stage 1: Pile --- */
     #pile-stage {
       background: transparent;
     }
+
     .pile-area {
       position: relative;
       width: 100%;
@@ -73,13 +84,14 @@
       align-items: center;
       justify-content: center;
     }
+
     .pile-card {
       position: absolute;
       width: 120px;
       height: 200px;
       background: #f0f0f0;
       border-radius: 5px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       cursor: pointer;
       display: flex;
       flex-direction: column;
@@ -91,6 +103,7 @@
       aspect-ratio: 9 / 16;
       overflow: hidden;
     }
+
     .pile-card video {
       position: absolute;
       top: 0;
@@ -100,6 +113,7 @@
       object-fit: cover;
       z-index: 0;
     }
+
     .pile-card .card-content {
       position: relative;
       z-index: 1;
@@ -108,32 +122,39 @@
       flex-direction: column;
       justify-content: space-between;
     }
+
     .pile-card:hover {
       z-index: 100 !important;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
     }
+
     .card-icon {
       font-size: 24px;
     }
+
     .card-title {
       font-size: 18px;
       font-weight: 700;
       line-height: 1.2;
     }
+
     .card-tag {
       font-size: 11px;
       opacity: 0.6;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
+
     /* --- Stage 2 & 3: Grid --- */
     #grid-stage {
       background: transparent;
       color: #111;
     }
+
     #grid-stage .stage-desc {
       color: #111;
     }
+
     .grid-container {
       position: relative;
       width: 100%;
@@ -146,6 +167,7 @@
       overflow: hidden;
       align-content: start;
     }
+
     .grid-cell {
       position: relative;
       background: transparent;
@@ -158,21 +180,25 @@
       min-width: 0;
       min-height: 0;
     }
+
     .grid-cell.active {
       opacity: 1;
       background: #fff;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     }
+
     .grid-cell.main-card {
       z-index: 10;
       background: #222;
       color: #fff;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
+
     .grid-cell.side-card {
       background: #fff;
       color: #111;
     }
+
     /* Card Content in Grid */
     .cell-content {
       width: 100%;
@@ -182,11 +208,12 @@
       flex-direction: column;
       justify-content: space-between;
     }
+
     .like-btn {
       align-self: flex-end;
       padding: 8px 12px;
       border-radius: 20px;
-      background: rgba(0,0,0,0.05);
+      background: rgba(0, 0, 0, 0.05);
       border: none;
       cursor: pointer;
       font-size: 12px;
@@ -196,28 +223,33 @@
       gap: 4px;
       transition: all 0.2s;
     }
+
     .like-btn:hover {
       background: rgba(255, 127, 152, 0.1);
       color: #ff7f98;
     }
+
     .like-btn.liked {
       background: #ff7f98;
       color: white;
     }
+
     .main-card .like-btn {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       color: #fff;
     }
+
     .main-card .like-btn.liked {
       background: #ff7f98;
       color: white;
     }
+
     .drag-hint {
       position: absolute;
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.8);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
       padding: 12px 24px;
       border-radius: 30px;
@@ -229,29 +261,33 @@
       opacity: 0;
       transition: opacity 0.5s;
     }
+
     .drag-hint.visible {
       opacity: 1;
     }
+
     /* --- Stage 4: BUBBLE --- */
     #bubble-stage {
       background: transparent;
     }
+
     #three-canvas {
       position: absolute;
       inset: 0;
     }
+
     .bubble-hint {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 20px 40px;
-      border-radius: 30px;
+      background: #AFFFEC;
+      ;
+      color: rgb(9, 9, 9);
+      padding: 10px 20px;
       font-size: 18px;
       font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
-      font-weight: 200;
+      font-weight: 300;
       font-variation-settings: "wght" 200;
       pointer-events: none;
       opacity: 0;
@@ -261,64 +297,87 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
+
     .bubble-hint.visible {
       opacity: 1;
       animation: twinkle 2s ease-in-out infinite;
     }
+
     @keyframes twinkle {
-      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.05); }
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      50% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(1.05);
+      }
     }
+
     /* 나레이션 문구 스타일 */
     .narration-text {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      padding: 30px 50px;
-      border-radius: 30px;
+      background: transparent;
+      color: #121212cc;
+      padding: 0;
+      border-radius: 0;
       font-size: 20px;
-      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Noto Sans KR", sans-serif;
-      font-weight: 300;
-      font-variation-settings: "wght" 300;
-      pointer-events: none;
+      font-weight: 400;
+      box-shadow: none;
+      text-shadow: 0 0 20px #ffffffcc, 0 0 40px rgba(255, 255, 255, 0.523), 0 0 60px rgba(255, 255, 255, 0.337);
+      max-width: 400px;
       opacity: 0;
       transition: opacity 0.8s ease;
       z-index: 10001;
-      max-width: 80%;
       text-align: center;
       line-height: 1.6;
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.151);
     }
+
     .narration-text.visible {
       opacity: 1;
     }
+
     /* 버블 밖으로 나갔을 때 문구 스타일 (버블 옆에 표시) */
     .narration-text.outside-bubble {
       top: 50%;
       left: 75%;
       transform: translate(-50%, -50%);
       background: transparent;
-      color: #ffffff;
+      color: #121212cc;
       padding: 0;
       border-radius: 0;
       font-size: 24px;
       font-weight: 500;
       box-shadow: none;
-      text-shadow: 0 0 20px rgba(175, 255, 236, 0.8), 0 0 40px rgba(175, 255, 236, 0.4), 0 0 60px rgba(175, 255, 236, 0.2);
+      text-shadow: 0 0 20px #ffffffcc, 0 0 40px rgba(255, 255, 255, 0.4), 0 0 60px rgba(255, 255, 255, 0.2);
       max-width: 400px;
     }
+
     /* 안내 문구 깜빡임 애니메이션 */
     .bubble-hint.blink {
       animation: blink 1s ease-in-out infinite;
     }
+
     @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
     }
+
     .new-bubble-btn {
       position: absolute;
       bottom: 80px;
@@ -338,11 +397,13 @@
       transition: all 0.3s;
       backdrop-filter: blur(10px);
     }
+
     .new-bubble-btn:hover {
       background: rgb(39, 39, 39);
       transform: translateX(-50%) scale(1.05);
       box-shadow: 0 4px 20px rgba(255, 127, 152, 0.5);
     }
+
     /* --- Logo --- */
     .logo {
       position: fixed;
@@ -350,25 +411,31 @@
       transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
       pointer-events: none;
     }
+
     .logo.start-screen {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 400px;
+      width: 600px;
       height: auto;
       opacity: 1;
       animation: float 3s ease-in-out infinite;
     }
+
     @keyframes float {
-      0%, 100% {
+
+      0%,
+      100% {
         transform: translate(-50%, -50%) translateY(0px);
       }
+
       50% {
         transform: translate(-50%, -50%) translateY(-20px);
       }
     }
+
     .logo.small {
-      top:30px;
+      top: 30px;
       left: 30px;
       right: auto;
       transform: translate(0, 0);
@@ -378,6 +445,7 @@
       animation: none;
       z-index: 6000 !important;
     }
+
     /* --- Start Screen --- */
     #start-screen {
       position: fixed;
@@ -392,42 +460,49 @@
       pointer-events: auto;
       background: transparent;
     }
+
     #start-screen .logo {
-      margin-bottom: 150px;
+      margin-bottom: 350px;
     }
+
     #start-screen.hidden {
       opacity: 0;
       pointer-events: none;
     }
+
     /* --- Start Button --- */
     @font-face {
       font-family: "CirrusCumulus";
       src: local("CirrusCumulus"), url("CirrusCumulus.woff2") format("woff2"),
-           url("CirrusCumulus.woff") format("woff"),
-           url("CirrusCumulus.ttf") format("truetype");
+        url("CirrusCumulus.woff") format("woff"),
+        url("CirrusCumulus.ttf") format("truetype");
       font-weight: normal;
       font-style: normal;
     }
+
     .start-button {
       font-family: "CirrusCumulus", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       font-size: 48px;
       font-weight: 300;
       color: rgba(255, 255, 255, 0.95);
+      text-shadow: #f0f0f0 0px 0px 10px;
       background: transparent;
       border: none;
       padding: 0;
       cursor: pointer;
       position: relative;
-      top:140px;
+      top: 240px;
       text-decoration: none;
       letter-spacing: 0.1em;
       opacity: 0;
       animation: fadeInStart 1s ease 0.5s forwards, twinkle 2.5s ease-in-out infinite;
       transition: all 0.3s ease;
     }
+
     .start-button:hover {
       color: rgba(255, 255, 255, 1);
     }
+
     .start-button::after {
       content: '';
       position: absolute;
@@ -440,24 +515,31 @@
       transition: width 0.4s ease;
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
     }
+
     .start-button:hover::after {
       width: 100%;
     }
+
     @keyframes fadeInStart {
       to {
         opacity: 1;
       }
     }
+
     @keyframes twinkle {
-      0%, 100% {
+
+      0%,
+      100% {
         opacity: 0.85;
         text-shadow: 0 0 15px rgba(255, 255, 255, 0.4), 0 0 30px rgba(255, 255, 255, 0.2);
       }
+
       50% {
         opacity: 1;
         text-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 0 50px rgba(255, 255, 255, 0.4);
       }
     }
+
     /* --- Stage Description Text (하단 중앙) --- */
     .stage-desc-bottom {
       position: fixed;
@@ -479,6 +561,7 @@
       padding: 0 20px;
       background-color: #AFFFEC;
     }
+
     .stage-desc-bottom.visible {
       opacity: 1;
     }
@@ -498,6 +581,7 @@
       cursor: pointer;
       padding-bottom: 6px;
     }
+
     .about-box .about-tooltip {
       position: absolute;
       top: 120%;
@@ -516,10 +600,12 @@
       pointer-events: none;
       text-align: left;
     }
+
     .about-box:hover .about-tooltip {
       opacity: 1;
       visibility: visible;
     }
+
     .custom-cursor {
       position: fixed;
       top: 0;
@@ -536,13 +622,14 @@
     }
   </style>
 </head>
+
 <body>
   <div class="custom-cursor" id="custom-cursor"></div>
   <div class="about-box" id="about-box">
     ABOUT.
     <div class="about-tooltip" id="about-tooltip"></div>
   </div>
-   <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
+  <img src="logo.png" alt="Logo" class="logo start-screen" id="main-logo">
   <!-- START SCREEN -->
   <div id="start-screen">
     <button class="start-button" id="start-button">Start.</button>
@@ -583,12 +670,12 @@
       { id: 'sport', label: 'SPORT', videos: [] },
       { id: 'pet', label: 'PET', videos: [] },
     ];
-    
+
     // 카테고리별 영상 파일 경로 생성 함수
     function getCategoryVideos(categoryId, subCategory = null) {
       const videos = [];
-      
-      switch(categoryId) {
+
+      switch (categoryId) {
         case 'food':
           if (subCategory === 'cook') {
             for (let i = 1; i <= 6; i++) videos.push(`food/F C ${i}.mp4`);
@@ -632,10 +719,10 @@
           // pet 폴더가 비어있음
           break;
       }
-      
+
       return videos;
     }
-    
+
     // 파일명에서 세부 카테고리 추출
     function getSubCategoryFromFilename(filename, categoryId) {
       if (categoryId === 'food') {
@@ -670,7 +757,7 @@
     };
 
     const FLOOD_LIKES_THRESHOLD = 6; // ★ FIX: 6번 좋아요면 도배 + 버블 진입
-    
+
     function getCurrentCardScale() {
       if (state.likes >= 8) return 0.7;
       if (state.likes >= 6) return 0.8;
@@ -693,10 +780,10 @@
       const l = state.likes;
       let useDominantProb = 0;
 
-      if (l <= 2)       useDominantProb = 0.4;
-      else if (l <= 4)  useDominantProb = 0.7;
-      else if (l <= 7)  useDominantProb = 0.9;
-      else              useDominantProb = 1.0;
+      if (l <= 2) useDominantProb = 0.4;
+      else if (l <= 4) useDominantProb = 0.7;
+      else if (l <= 7) useDominantProb = 0.9;
+      else useDominantProb = 1.0;
 
       if (Math.random() < useDominantProb) return state.dominantVideoUrl;
       return videos[Math.floor(Math.random() * videos.length)];
@@ -726,38 +813,38 @@
       const text = ABOUT_TEXTS[stageKey] || '';
       aboutTooltip.innerHTML = text;
     }
-    
+
     // --- START SCREEN LOGIC ---
     function initStartScreen() {
       startButton.addEventListener('click', (e) => {
         e.stopPropagation();
         goToPileStage();
       });
-      
+
       startScreen.addEventListener('click', (e) => {
         if (e.target !== startButton && !startButton.contains(e.target)) {
           goToPileStage();
         }
       });
     }
-    
+
     function goToPileStage() {
       startScreen.classList.add('hidden');
-      
+
       mainLogo.classList.remove('start-screen');
       mainLogo.classList.add('small');
-      
+
       setTimeout(() => {
         stageDescBottom.textContent = '마우스를 움직여 카드를 헤치고, 마음에 드는 카드 하나를 선택해보세요.';
         stageDescBottom.classList.add('visible');
       }, 400);
-      
+
       setTimeout(() => {
         stages.pile.classList.add('active');
         initPile();
       }, 400);
     }
-    
+
     function updateStageDesc(text) {
       stageDescBottom.textContent = text;
       if (!stageDescBottom.classList.contains('visible')) {
@@ -771,28 +858,28 @@
         const topic = TOPICS[i % TOPICS.length];
         const card = document.createElement('div');
         card.className = 'pile-card';
-        
+
         const categoryVideos = getCategoryVideos(topic.id);
         if (categoryVideos.length === 0) continue;
-        
+
         const randomVideo = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
         const videoUrl = randomVideo;
-        
+
         card.innerHTML = `
           <video autoplay loop muted playsinline preload="none">
             <source src="${videoUrl}" type="video/mp4">
           </video>
           <div class="card-content"></div>
         `;
-        
+
         const video = card.querySelector('video');
         if (video) {
           video.addEventListener('loadeddata', () => {
-            video.play().catch(() => {});
+            video.play().catch(() => { });
           }, { once: true });
           video.load();
         }
-        
+
         const angle = Math.random() * Math.PI * 2;
         const dist = Math.random() * 100;
         const x = Math.cos(angle) * dist;
@@ -816,7 +903,7 @@
       const cardPhysics = {};
       let hasSpread = false;
       let initialSpreadTime = 0;
-      
+
       cards.forEach((card, i) => {
         cardPhysics[i] = {
           vx: 0,
@@ -830,11 +917,11 @@
           rot: parseFloat(card.dataset.rot)
         };
       });
-      
+
       let mouseX = window.innerWidth / 2;
       let mouseY = window.innerHeight / 2;
       let isMouseInArea = false;
-      
+
       pileArea.addEventListener('mouseenter', () => {
         isMouseInArea = true;
         if (!hasSpread) {
@@ -850,87 +937,87 @@
           });
         }
       });
-      
+
       pileArea.addEventListener('mouseleave', () => {
         isMouseInArea = false;
       });
-      
+
       document.addEventListener('mousemove', (e) => {
         if (!stages.pile.classList.contains('active')) return;
         mouseX = e.clientX;
         mouseY = e.clientY;
       });
-      
+
       function physicsUpdate() {
         if (!stages.pile.classList.contains('active')) {
           requestAnimationFrame(physicsUpdate);
           return;
         }
-        
+
         const timeSinceSpread = Date.now() - initialSpreadTime;
         const spreadDuration = 1000;
-        
+
         cards.forEach((card, i) => {
           const physics = cardPhysics[i];
-          
+
           if (hasSpread && timeSinceSpread < spreadDuration) {
             const progress = Math.min(timeSinceSpread / spreadDuration, 1);
             const easeProgress = 1 - Math.pow(1 - progress, 3);
             const targetX = physics.baseX + (physics.spreadX - physics.baseX) * easeProgress;
             const targetY = physics.baseY + (physics.spreadY - physics.baseY) * easeProgress;
-            
+
             physics.currentX = targetX;
             physics.currentY = targetY;
           } else if (hasSpread) {
             const targetX = physics.baseX + physics.spreadX;
             const targetY = physics.baseY + physics.spreadY;
-            
+
             const restoreStrength = 0.15;
             physics.vx += (targetX - physics.currentX) * restoreStrength;
             physics.vy += (targetY - physics.currentY) * restoreStrength;
           }
-          
+
           if (hasSpread && isMouseInArea) {
             const rect = card.getBoundingClientRect();
             const cardCx = rect.left + rect.width / 2;
             const cardCy = rect.top + rect.height / 2;
             const dx = mouseX - cardCx;
             const dy = mouseY - cardCy;
-            const distSq = dx*dx + dy*dy;
+            const distSq = dx * dx + dy * dy;
             const maxDistSq = 16900;
-            
+
             if (distSq < maxDistSq && distSq > 0) {
               const dist = Math.sqrt(distSq);
               const force = (130 - dist) / 130;
               const repulsionStrength = 1.5;
               const fx = -(dx / dist) * force * repulsionStrength;
               const fy = -(dy / dist) * force * repulsionStrength;
-              
+
               physics.vx += fx;
               physics.vy += fy;
             }
           }
-          
+
           const friction = 0.55;
           physics.vx *= friction;
           physics.vy *= friction;
-          
+
           physics.currentX += physics.vx;
           physics.currentY += physics.vy;
-          
+
           card.style.transform = `translate(${physics.currentX}px, ${physics.currentY}px) rotate(${physics.rot}deg)`;
         });
-        
+
         requestAnimationFrame(physicsUpdate);
       }
-      
+
       physicsUpdate();
     }
 
     function selectCard(topic, clickedCard = null) {
       state.selectedTopic = topic;
       state.selectedVideoUrl = clickedCard ? clickedCard.dataset.videoUrl : null;
-      
+
       if (clickedCard) {
         const card = clickedCard;
         const centerX = window.innerWidth / 2;
@@ -940,16 +1027,16 @@
         const currentY = rect.top + rect.height / 2;
         const targetX = centerX - currentX;
         const targetY = centerY - currentY;
-        
+
         card.style.transition = 'transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), z-index 0.6s';
         card.style.zIndex = '1000';
-        
+
         const baseX = parseFloat(card.dataset.x);
         const baseY = parseFloat(card.dataset.y);
         const rot = parseFloat(card.dataset.rot);
-        
+
         card.style.transform = `translate(${baseX + targetX}px, ${baseY + targetY}px) rotate(0deg) scale(1.2)`;
-        
+
         setTimeout(() => {
           stages.pile.classList.remove('active');
           stages.grid.classList.add('active');
@@ -960,7 +1047,7 @@
       } else {
         stages.pile.classList.remove('active');
         stages.grid.classList.add('active');
-      updateAboutText('grid');
+        updateAboutText('grid');
         updateStageDesc('마음에 드는 카드를 클릭해 화면을 꽉 채워보세요!');
         initGrid(topic);
       }
@@ -968,22 +1055,22 @@
 
     function initGrid(topic) {
       gridContainer.innerHTML = '';
-      
+
       const rows = 3;
       const gap = 8;
       const padding = 12;
       const availableWidth = window.innerWidth - padding * 2;
       const availableHeight = window.innerHeight - padding * 2;
-      
+
       const cardHeight = (availableHeight - (gap * (rows - 1))) / rows;
       const cardWidth = cardHeight * (9 / 16);
-      
+
       const cols = Math.max(3, Math.floor(availableWidth / (cardWidth + gap)));
       const totalCells = cols * rows;
-      
+
       gridContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
       gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-      
+
       const cells = [];
       for (let i = 0; i < totalCells; i++) {
         const cell = document.createElement('div');
@@ -992,13 +1079,13 @@
         gridContainer.appendChild(cell);
         cells.push(cell);
       }
-      
+
       const centerIdx = Math.floor(totalCells / 2);
       const mainVideoUrl = state.selectedVideoUrl || getCategoryVideos(topic.id)[0];
       setupCell(cells[centerIdx], topic, mainVideoUrl, true);
       cells[centerIdx].classList.add('main-card', 'active');
       applyGridCardScale(cells[centerIdx]);
-      
+
       setTimeout(() => {
         if (centerIdx - 1 >= 0) {
           const v = getVideoUrlForGrid() || getCategoryVideos(topic.id)[0];
@@ -1016,7 +1103,7 @@
         }
       }, 600);
     }
-    
+
     function setupCell(element, data, videoUrl, isMain) {
       if (!videoUrl) {
         const categoryVideos = getCategoryVideos(data.id);
@@ -1024,7 +1111,7 @@
           videoUrl = categoryVideos[Math.floor(Math.random() * categoryVideos.length)];
         }
       }
-      
+
       element.innerHTML = `
         <div class="cell-content">
           <video class="card-video" autoplay loop muted playsinline preload="none" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 8px; pointer-events: none;">
@@ -1037,15 +1124,15 @@
           </div>
         </div>
       `;
-      
+
       const video = element.querySelector('.card-video');
       if (video) {
         video.addEventListener('loadeddata', () => {
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         }, { once: true });
         video.load();
       }
-      
+
       element.style.cursor = 'pointer';
       element.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1055,7 +1142,7 @@
           expandGrid();
         }
       });
-      
+
       const btn = element.querySelector('.like-btn');
       if (btn) {
         btn.addEventListener('click', (e) => {
@@ -1119,7 +1206,7 @@
       const cells = Array.from(document.querySelectorAll('.grid-cell:not(.active)'));
       if (cells.length > 0) {
         const toReveal = cells.sort(() => 0.5 - Math.random()).slice(0, 3);
-        
+
         toReveal.forEach((cell, i) => {
           setTimeout(() => {
             const v = getVideoUrlForGrid() || getCategoryVideos(state.selectedTopic.id)[0];
@@ -1140,7 +1227,7 @@
       scrollProgress: 0,
       isTransitioning: false
     };
-    
+
     function goToBubbleStage() {
       const gridCards = Array.from(document.querySelectorAll('.grid-cell.active'));
       const cardData = gridCards.map((cell, index) => {
@@ -1158,25 +1245,25 @@
           index
         };
       });
-      
+
       stages.grid.style.transition = 'opacity 0.8s ease';
       stages.grid.style.opacity = '0';
-      
+
       setTimeout(() => {
         stages.grid.classList.remove('active');
         stages.bubble.classList.add('active');
         updateAboutText('bubble');
-        
+
         const stageDescBottom = document.getElementById('stage-desc-bottom');
         if (stageDescBottom) {
           stageDescBottom.classList.remove('visible');
         }
-        
+
         if (!state.bubbleInited) {
           initThreeJS(cardData);
           state.bubbleInited = true;
         }
-        
+
         startNarration();
       }, 400);
     }
@@ -1191,27 +1278,27 @@
       narrationCompleted: false,
       outsidePromptLocked: false
     };
-    
+
     function startNarration() {
       const narrationText = document.getElementById('narration-text');
       const hintInside = document.getElementById('bubble-hint-inside');
-      
+
       if (!narrationText) return;
-      
+
       const narrationLines = [
         '당신은 다양한 컨텐츠를 보고있다고 생각하지만',
         '알고리즘이 결국 세상을 넓은 시각으로 바라보는 것을 방해할 수 있습니다.'
       ];
-      
+
       let currentLineIndex = 0;
-      
+
       function showNextLine() {
         if (currentLineIndex >= narrationLines.length) {
           narrationText.classList.remove('visible');
           setTimeout(() => {
             narrationText.style.display = 'none';
             bubbleState.narrationCompleted = true;
-            
+
             if (hintInside) {
               hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
               hintInside.classList.add('visible', 'blink');
@@ -1219,11 +1306,11 @@
           }, 800);
           return;
         }
-        
+
         narrationText.textContent = narrationLines[currentLineIndex];
         narrationText.style.display = 'block';
         narrationText.classList.add('visible');
-        
+
         setTimeout(() => {
           narrationText.classList.remove('visible');
           setTimeout(() => {
@@ -1232,25 +1319,25 @@
           }, 800);
         }, 2500);
       }
-      
+
       setTimeout(() => {
         showNextLine();
       }, 500);
     }
-    
+
     // ★★★ 여기부터: 비디오 텍스처 / 재질 부분 수정 ★★★
     function initThreeJS(cardData = []) {
       const container = document.getElementById('three-canvas');
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-      
+
       renderer.setSize(window.innerWidth, window.innerHeight);
       container.appendChild(renderer.domElement);
-      
+
       const group = new THREE.Group();
       scene.add(group);
-      
+
       // 카드 개수
       const count = Math.min(90, Math.max(50, cardData.length * 2 || 50));
       const radius = 8;
@@ -1267,21 +1354,21 @@
         video.muted = true;
         video.playsInline = true;
         video.preload = 'auto';
-        video.play().catch(() => {});
-        
+        video.play().catch(() => { });
+
         const texture = new THREE.VideoTexture(video);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.needsUpdate = true;
         return texture;
       }
-      
+
       const videoUrls = state.selectedTopic ? getCategoryVideos(state.selectedTopic.id) : [];
-      
+
       if (!state.dominantVideoUrl && videoUrls.length > 0) {
         state.dominantVideoUrl = state.selectedVideoUrl || videoUrls[Math.floor(Math.random() * videoUrls.length)];
       }
-      
+
       const cards = [];
       for (let i = 0; i < count; i++) {
         const phi = Math.acos(-1 + (2 * i) / count);
@@ -1314,7 +1401,7 @@
         }
 
         const card = new THREE.Mesh(geometry, material);
-        
+
         if (cardData && cardData.length > 0 && cardData[i % cardData.length]) {
           const dataIndex = i % cardData.length;
           card.position.set(
@@ -1333,20 +1420,20 @@
           card.userData.targetPosition = pos.clone();
           card.userData.isTransitioning = false;
         }
-        
+
         card.lookAt(0, 0, 0);
-        
+
         card.userData.originalPosition = card.userData.targetPosition.clone();
         card.userData.originalRotation = card.rotation.clone();
         card.userData.velocity = new THREE.Vector3(0, 0, 0);
-        
+
         group.add(card);
         cards.push(card);
       }
-      
+
       camera.position.z = bubbleState.cameraDistance;
       camera.lookAt(0, 0, 0);
-      
+
       const hintInside = document.getElementById('bubble-hint-inside');
       const hintOutside = document.getElementById('bubble-hint-outside');
       const newBubbleBtn = document.getElementById('new-bubble-btn');
@@ -1381,20 +1468,20 @@
         }
         bubbleState.outsidePromptLocked = false;
       }
-      
+
       let isDragging = false;
       let prevX = 0;
       let prevY = 0;
       let shakeIntensity = 0;
-      
+
       container.addEventListener('mousedown', e => {
         isDragging = true;
         prevX = e.clientX;
         prevY = e.clientY;
       });
-      
+
       window.addEventListener('mouseup', () => isDragging = false);
-      
+
       container.addEventListener('mousemove', e => {
         if (!isDragging || bubbleState.isExploding) return;
         const dx = e.clientX - prevX;
@@ -1404,43 +1491,43 @@
         prevX = e.clientX;
         prevY = e.clientY;
       });
-      
+
       container.addEventListener('wheel', (e) => {
         e.preventDefault();
-        
+
         const delta = e.deltaY * 0.05;
         bubbleState.cameraDistance += delta;
         bubbleState.cameraDistance = Math.max(0.1, Math.min(30, bubbleState.cameraDistance));
-        
+
         if (bubbleState.cameraDistance > 12) {
           if (!bubbleState.isOutside) {
             bubbleState.isOutside = true;
             bubbleState.clickCount = 0;
-            
+
             showOutsideNarration();
           }
         } else {
           bubbleState.isOutside = false;
           bubbleState.clickCount = 0;
-          
+
           if (!bubbleState.outsidePromptLocked || bubbleState.isExploding) {
             hideOutsideNarration();
-            
+
             if (hintInside && bubbleState.narrationCompleted) {
               hintInside.textContent = '드래그 : 버블 탐색 / 스크롤 : 알고리즘 버블에서 탈출';
               hintInside.classList.add('visible', 'blink');
             }
-            
+
             if (newBubbleBtn) {
               newBubbleBtn.style.display = 'none';
             }
           }
         }
       });
-      
+
       container.addEventListener('click', (e) => {
         if (!bubbleState.isOutside || bubbleState.isExploding) return;
-        
+
         const now = Date.now();
         if (now - bubbleState.lastClickTime < 1000) {
           bubbleState.clickCount++;
@@ -1448,15 +1535,15 @@
           bubbleState.clickCount = 1;
         }
         bubbleState.lastClickTime = now;
-        
+
         shakeIntensity = 0.3;
-        
+
         if (bubbleState.clickCount >= 5) {
           hideOutsideNarration();
           explodeBubble(cards);
         }
       });
-      
+
       if (newBubbleBtn) {
         newBubbleBtn.addEventListener('click', () => {
           stages.bubble.classList.remove('active');
@@ -1468,59 +1555,59 @@
           state.selectedVideoUrl = null;
           state.dominantVideoUrl = null;
           state.floodTriggered = false;
-          
+
           location.reload();
         });
       }
-      
+
       function explodeBubble(cards) {
         if (bubbleState.isExploding) return;
         bubbleState.isExploding = true;
-        
+
         const sortedCards = cards.map((card, i) => ({
           card,
           y: card.position.y,
           index: i
         })).sort((a, b) => b.y - a.y);
-        
+
         sortedCards.forEach((item, delayIndex) => {
           const card = item.card;
           const delay = delayIndex * 20;
-          
+
           setTimeout(() => {
             const gravity = -0.02;
             const horizontalSpread = (Math.random() - 0.5) * 0.1;
             const forwardSpread = (Math.random() - 0.5) * 0.1;
-            
+
             card.userData.velocity = new THREE.Vector3(
               horizontalSpread,
               gravity,
               forwardSpread
             );
-            
+
             card.userData.rotationSpeed = new THREE.Vector3(
               (Math.random() - 0.5) * 0.2,
               (Math.random() - 0.5) * 0.2,
               (Math.random() - 0.5) * 0.2
             );
-            
+
             card.userData.gravity = gravity;
             card.userData.fallSpeed = 0;
           }, delay);
         });
       }
-      
+
       let lastFrameTime = 0;
       function animate(currentTime) {
         requestAnimationFrame(animate);
-        
+
         const deltaTime = currentTime - lastFrameTime;
         if (deltaTime < 16) return;
         lastFrameTime = currentTime;
-        
+
         const targetZ = bubbleState.cameraDistance;
         camera.position.z += (targetZ - camera.position.z) * 0.1;
-        
+
         if (shakeIntensity > 0 && !bubbleState.isExploding) {
           const shakeX = (Math.random() - 0.5) * shakeIntensity;
           const shakeY = (Math.random() - 0.5) * shakeIntensity;
@@ -1532,7 +1619,7 @@
             group.position.set(0, 0, 0);
           }
         }
-        
+
         cards.forEach(card => {
           if (card.userData.isTransitioning && !bubbleState.isExploding) {
             card.userData.transitionProgress += 0.02;
@@ -1543,10 +1630,10 @@
             const t = card.userData.transitionProgress;
             const easeT = t * t * (3 - 2 * t);
             card.position.lerp(card.userData.targetPosition, easeT);
-            card.lookAt(0,0,0);
+            card.lookAt(0, 0, 0);
           }
         });
-        
+
         if (bubbleState.isExploding) {
           cards.forEach(card => {
             if (card.userData.velocity) {
@@ -1556,8 +1643,8 @@
               }
               card.position.add(card.userData.velocity);
               const distance = Math.sqrt(
-                card.position.x * card.position.x + 
-                card.position.y * card.position.y + 
+                card.position.x * card.position.x +
+                card.position.y * card.position.y +
                 card.position.z * card.position.z
               );
               if (distance > 50 || card.position.y < -30) {
@@ -1582,11 +1669,11 @@
             }
           });
         }
-        
+
         renderer.render(scene, camera);
       }
       animate();
-      
+
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -1603,14 +1690,14 @@
         { r: 255, g: 0, b: 0 },
         { r: 255, g: 55, b: 0 }
       ];
-      
+
       const opacity = 0.25;
-      
+
       let time = 0;
       const speed = 0.005;
       let lastUpdate = 0;
       const throttleMs = 16;
-      
+
       function lerpColor(color1, color2, t) {
         const easedT = t * t * (3 - 2 * t);
         return {
@@ -1619,7 +1706,7 @@
           b: Math.round(color1.b + (color2.b - color1.b) * easedT)
         };
       }
-      
+
       function updateGradient() {
         const now = performance.now();
         if (now - lastUpdate < throttleMs) {
@@ -1628,42 +1715,42 @@
         }
         lastUpdate = now;
         time += speed;
-        
+
         const colorProgress = (time * colors.length) % colors.length;
         const colorIndex1 = Math.floor(colorProgress) % colors.length;
         const colorIndex2 = (colorIndex1 + 1) % colors.length;
         const colorIndex3 = (colorIndex1 + 2) % colors.length;
         const t = colorProgress - Math.floor(colorProgress);
-        
+
         const centerColor1 = colors[colorIndex1];
         const centerColor2 = colors[colorIndex2];
         const centerColor = lerpColor(centerColor1, centerColor2, t);
-        
+
         const midColor1 = colors[colorIndex2];
         const midColor2 = colors[colorIndex3];
         const midColor = lerpColor(midColor1, midColor2, t);
-        
+
         const outerColor1 = colors[colorIndex3];
         const outerColor2 = colors[(colorIndex3 + 1) % colors.length];
         const outerColor = lerpColor(outerColor1, outerColor2, t);
-        
+
         const angle = time * 1.2;
         const centerX = 50 + Math.cos(angle) * 40;
         const centerY = 50 + Math.sin(angle * 1.5) * 40;
-        
+
         const gradient = `radial-gradient(circle at ${centerX}% ${centerY}%, 
           rgba(${centerColor.r}, ${centerColor.g}, ${centerColor.b}, ${opacity}) 0%, 
           rgba(${midColor.r}, ${midColor.g}, ${midColor.b}, ${opacity}) 50%, 
           rgba(${outerColor.r}, ${outerColor.g}, ${outerColor.b}, ${opacity}) 100%)`;
-        
+
         document.body.style.background = gradient;
-        
+
         requestAnimationFrame(updateGradient);
       }
-      
+
       updateGradient();
     }
-    
+
     const customCursor = document.getElementById('custom-cursor');
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
@@ -1682,10 +1769,11 @@
       customCursor.style.left = mouseX + 'px';
       customCursor.style.top = mouseY + 'px';
     }
-    
+
     initAnimatedGradient();
     initStartScreen();
     updateAboutText('start');
   </script>
 </body>
+
 </html>
